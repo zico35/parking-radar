@@ -14,45 +14,46 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Leitstand-Architektur & PM-Strategie für moderne Park- & Mobilitätssysteme")
 
-# --- Datenquellen: Vollständiges PM-Fachvokabular (DE + EN) ---
+# --- Datenquellen: Vollständiges PM-Fachvokabular (27 Wettbewerber weltweit) ---
 COMPETITORS = {
-    # --- 1. Global & DACH Enterprise Systemhäuser ---
-    "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier) when:90d',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parking OR entervo OR "mobility CONNECT" OR ticketless) when:90d',
-    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") (JMS OR ticketless OR barrier) when:90d',
-    "Amano McGann": '("Amano McGann" OR "Amano Parking") ("Amano ONE" OR ticketless) when:90d',
-    "Flowbird": '"Flowbird" (Parking OR "pay-by-plate" OR ticketless OR "open payment") when:90d',
+    # 1. Globale & DACH Enterprise Systemhäuser
+    "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier OR airport) when:90d',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parking OR entervo OR "mobility CONNECT" OR ticketless OR gateless) when:90d',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") (JMS OR ticketless OR "free flow" OR barrier) when:90d',
+    "Amano McGann": '("Amano McGann" OR "Amano Parking") ("Amano ONE" OR ticketless OR gateless) when:90d',
+    "Flowbird": '"Flowbird" (Parking OR "pay-by-plate" OR ticketless OR "open payment" OR enforcement) when:90d',
     "WPS Parking": '("WPS Parking" OR "WPS ParkAdvance") (ticketless OR barrier OR cloud) when:90d',
     "IP Parking": '"IP Parking" (ParkBase OR ticketless OR barrier OR cloud) when:90d',
     "ICA Traffic": '("ICA Traffic" OR "ICA Parking") (Kassenautomat OR ticketless OR Schranke) when:90d',
     "Orbility": '"Orbility" (Parking OR ticketless OR barrier OR airport) when:90d',
-    "Meypar": '"Meypar" (Parking OR ticketless OR barrier) when:90d',
-    "Equinsa": '"Equinsa" (Parking OR aparcamiento OR ticketless) when:90d',
+    "Meypar": '"Meypar" (Parking OR ticketless OR barrier OR "control de accesos") when:90d',
+    "Equinsa": '"Equinsa" (Parking OR aparcamiento OR ticketless OR barrera) when:90d',
 
-    # --- 2. Free-Flow, ANPR & Retail-Disruptoren ---
-    "Peter Park": '"Peter Park" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR CityFlow) when:90d',
-    "WEMOLO (Parkdepot)": '("WEMOLO" OR "Parkdepot") (Parkplatz OR Parking OR enforcement OR "free-flow") when:90d',
-    "fair parken": '"fair parken" (Parkplatz OR schrankenlos OR Kennzeichen OR ANPR) when:90d',
-    "ARIVO": '"ARIVO" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR) when:90d',
-    "AVANTPARK": '"AVANTPARK" (Parken OR Parking OR ANPR OR schrankenlos) when:90d',
-    "Autopay": '("Autopay" OR "Autopay.de") (Parking OR ticketless OR "free-flow" OR ANPR) when:90d',
-    "JJames": '"JJames" (Parken OR Parking OR Schranken OR Kennzeichenerkennung) when:90d',
-    "DigiPark": '"DigiPark" (Parken OR Kennzeichen OR schrankenlos) when:90d',
-    "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor) when:90d',
+    # 2. Free-Flow, ANPR & Retail-Disruptoren
+    "Peter Park": '"Peter Park" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR CityFlow OR enforcement) when:90d',
+    "WEMOLO (Parkdepot)": '("WEMOLO" OR "Parkdepot") (Parkplatz OR Parking OR enforcement OR "free-flow" OR camera) when:90d',
+    "fair parken": '"fair parken" (Parkplatz OR schrankenlos OR Kennzeichen OR ANPR OR Überwachung) when:90d',
+    "ARIVO": '"ARIVO" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR Schrankenlos) when:90d',
+    "AVANTPARK": '"AVANTPARK" (Parken OR Parking OR ANPR OR schrankenlos OR Kennzeichen) when:90d',
+    "Autopay": '("Autopay" OR "Autopay.de") (Parking OR ticketless OR "free-flow" OR ANPR OR frictionless) when:90d',
+    "JJames": '"JJames" (Parken OR Parking OR Schranken OR Kennzeichenerkennung OR ANPR) when:90d',
+    "DigiPark": '"DigiPark" (Parken OR Kennzeichen OR schrankenlos OR Parkraumüberwachung) when:90d',
+    "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor OR ANPR) when:90d',
 
-    # --- 3. Corporate Parking & Mobility Software ---
+    # 3. Corporate & Shared Parking Software
     "ParkHere": '"ParkHere" (Parkplatz OR Parken OR Corporate OR Schranke OR IoT) when:90d',
-    "ParkEfficient": '"ParkEfficient" (Parkplatz OR Corporate OR Parkraummanagement) when:90d',
-    "BeParking (AU)": '("BeParking" OR "Becas") (Parking OR ticketless OR retrofit) when:90d',
+    "ParkEfficient": '"ParkEfficient" (Parkplatz OR Corporate OR Parkraummanagement OR Kontingent) when:90d',
+    "BeParking (AU)": '("BeParking" OR "Becas") (Parking OR ticketless OR retrofit OR "barrier integration") when:90d',
 
-    # --- 4. US Tech-Plattformen & CV ---
-    "Flash (USA)": '("FlashParking" OR "Flash Parking") (cloud OR EV OR ticketless) when:90d',
-    "Metropolis (USA)": '"Metropolis" (Parking OR "drive-through" OR "checkout-free") when:90d',
+    # 4. US Plattformen & Computer Vision
+    "Flash (USA)": '("FlashParking" OR "Flash Parking") (cloud OR EV OR "dynamic pricing" OR ticketless) when:90d',
+    "Metropolis (USA)": '"Metropolis" (Parking OR "drive-through" OR "checkout-free" OR "computer vision") when:90d',
 
-    # --- 5. Mobility & Payment Aggregatoren ---
-    "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition) when:90d',
+    # 5. Mobility & Payment Aggregatoren
+    "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition OR partnership) when:90d',
     "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership) when:90d'
 }
+
 # --- Cache-gestützte Datenabfrage mit strategischem PM-Tagging ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
@@ -104,66 +105,56 @@ def fetch_live_news():
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
 
-                # Control Center / Leitstand
                 if any(k in title_lower for k in [
                     "control center", "leitstand", "leitwarte", "remote", "intercom", 
                     "voip", "monitoring", "dispatch", "operator", "jms", "command"
                 ]):
                     tags.append("Control Center / Leitstand")
 
-                # APIs & Marktplatz / Schnittstellen
                 if any(k in title_lower for k in [
                     "api", "webhook", "sdk", "marketplace", "marktplatz", 
                     "schnittstelle", "integrat", "open platform", "ecosystem"
                 ]):
                     tags.append("APIs / Marktplatz")
 
-                # Dynamic Pricing
                 if any(k in title_lower for k in [
                     "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
                     "surge pricing", "variable rates", "pricing"
                 ]):
                     tags.append("Dynamic Pricing")
 
-                # Signage & Displays
                 if any(k in title_lower for k in [
                     "signage", "display", "anzeige", "led", "vms", 
                     "wayfinding", "screen", "stelen", "information display"
                 ]):
                     tags.append("Signage / Displays")
 
-                # Free-Flow / Ticketless
                 if any(k in title_lower for k in [
                     "ticketless", "free-flow", "free flow", "frictionless", 
                     "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
                 ]):
                     tags.append("Free-Flow / Ticketless")
 
-                # Shared Parking
                 if any(k in title_lower for k in [
-                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"
+                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate"
                 ]):
                     tags.append("Shared Parking")
 
-                # Enforcement & Validierung
                 if any(k in title_lower for k in [
                     "enforcement", "falschparker", "violation", "compliance", "validation"
                 ]):
                     tags.append("Enforcement / Überwachung")
 
-                # Kooperationen & Verträge
                 if any(k in title_lower for k in [
                     "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
                 ]):
                     tags.append("Kooperation")
 
-                # Hardware & Kassen
                 if any(k in title_lower for k in [
                     "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
                 ]):
                     tags.append("Hardware / POS")
 
-                # EV & Ladeinfrastruktur
                 if any(k in title_lower for k in [
                     "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
                 ]):
@@ -269,11 +260,11 @@ with tab2:
     st.caption("Detaillierte Analyse zu Leitstand (Control Center), offenen APIs, Dynamic Pricing & digitaler Kundenansprache (Signage).")
 
     detailed_matrix = [
-        # --- 1. Klassische Enterprise-Systemhäuser ---
+        # --- 1. Enterprise Systemhäuser ---
         {
             "Wettbewerber": "SKIDATA",
             "Segment": "Enterprise Systemhaus",
-            "Control Center / Leitstand": "Zentrales Monitoring & Control: Multi-Site-Leitstand, SIP/VoIP-Routing, Video-Streaming, Remote-Kennzeichenprüfung bei ANPR-Fehlern, Schrankenfernöffnung.",
+            "Control Center / Leitstand": "Zentrales Monitoring & Control: Multi-Site-Leitstand für Großbetreiber, Intercom/VoIP-Routing, Video-Streaming, Remote-Kennzeichenprüfung bei ANPR-Fehlern, Schrankenfernöffnung.",
             "APIs & Ökosystem": "SKIDATA Connect Plattform: Offene REST-APIs für Mobility-Partner, Parkplatz-Marktplätze, EV-Roaming und Vorbuchungsplattformen.",
             "Dynamic Pricing": "Regelbasierte Tarif-Engine (zeit-, event- und auslastungsabhängig); Synchronisation mit Kassen und Buchungsportalen.",
             "Signage & Displays": "Proprietäre und Standard-VMS-Ansteuerung (Zulauf, Restplätze, Echtzeit-Kennzeigenspiegelung an Ein-/Ausfahrt)."
@@ -295,6 +286,54 @@ with tab2:
             "Signage & Displays": "JDS (Janus Digital Signage): Integriertes CMS zur Steuerung dynamischer Werbe- und Infobildschirme an Automaten/Säulen."
         },
         {
+            "Wettbewerber": "WPS Parking",
+            "Segment": "Enterprise Systemhaus",
+            "Control Center / Leitstand": "ParkAdvance Control Room: Webbasiertes Leitstand-Cockpit, SIP-Intercom-Zentralisierung, visuelle Schranken- und Terminalüberwachung.",
+            "APIs & Ökosystem": "WPS Marketplace & APIs: Modulare Anbindung von Bezahl-Apps, ANPR-Systemen und Flottendiensten.",
+            "Dynamic Pricing": "Tarifmodelle für variable Zeiten und Event-Zuschläge.",
+            "Signage & Displays": "Vollfarb-Touchscreens an Terminals sowie LED-Hinweistafeln zur Fahrerführung."
+        },
+        {
+            "Wettbewerber": "IP Parking",
+            "Segment": "Enterprise Systemhaus (Cloud)",
+            "Control Center / Leitstand": "ParkBase Cloud Management: Webbasierte Zentrale für Hardware-Überwachung, SIP-Audio über WebRTC, Fernöffnung per Mausklick.",
+            "APIs & Ökosystem": "Starkes Open-API-Konzept: Schnittstellen zu Ticketing, Hotel-PMS, Dritt-Kassen und Kennzeichenerfassern.",
+            "Dynamic Pricing": "Auslastungs- und zeitabhängige Tarifierung über Cloud-Tarifmodul.",
+            "Signage & Displays": "Ansteuerung von Zulauf-Displays, Kennzeichen-Welcome-Displays und Touchscreens."
+        },
+        {
+            "Wettbewerber": "ICA Traffic",
+            "Segment": "Systemhaus (ÖPNV/Off-Street)",
+            "Control Center / Leitstand": "ICA Central System: Fokus auf Geräteüberwachung (Geldstatus, Papiervorrat, Alarmierung), klassische Fernwartung.",
+            "APIs & Ökosystem": "Schnittstellen zu kommunalen Verkehrsleitrechnern, ÖPNV-Ticketingsystemen und Barzahler-Infrastruktur.",
+            "Dynamic Pricing": "Klassische städtische Tarifzonen und Zeittarife; weniger agiles Yield-Pricing.",
+            "Signage & Displays": "Großdisplays an Kassenautomaten, Anbindung an städtische Parkleitsysteme."
+        },
+        {
+            "Wettbewerber": "Orbility",
+            "Segment": "Enterprise Systemhaus (Global)",
+            "Control Center / Leitstand": "Orbility e-Connect: Zentrale Leitwarte für Großanlagen (Flughäfen, Spitäler), Intercom-Integration, Kameraüberwachung.",
+            "APIs & Ökosystem": "Umfangreiche Schnittstellen für Drittanbieter-Validierungen, Airline-Systeme und Payment-Gateways.",
+            "Dynamic Pricing": "Fortschrittliche Tarifmodelle für Vorbuchungen und Yield-Management im Flughafen-Umfeld.",
+            "Signage & Displays": "Integration dynamischer VMS-Schilder, Terminal-Displays und Restplatzanzeigen."
+        },
+        {
+            "Wettbewerber": "Meypar",
+            "Segment": "Systemhaus (Südeuropa/LatAm)",
+            "Control Center / Leitstand": "Nexus Parking Management: Zentrale Leitstellensoftware für Alarmmanagement, Intercom und Kassenstati.",
+            "APIs & Ökosystem": "REST-Schnittstellen für Dritt-Payment, E-Commerce-Validierung und Kennzeichenabgleich.",
+            "Dynamic Pricing": "Konfigurierbare Zeittarife und Event-Staffelungen.",
+            "Signage & Displays": "LED-Zufahrtstafeln und Displayanzeigen an Einfahrtsterminals."
+        },
+        {
+            "Wettbewerber": "Equinsa",
+            "Segment": "Systemhaus (Spanien)",
+            "Control Center / Leitstand": "Equinsa Control Hub: Standard-Leitstand für Geräteüberwachung, Schrankenstatus und Gegensprechanbindung.",
+            "APIs & Ökosystem": "Schnittstellen für spanische Bezahl-Apps, Via-T (Telepass) und Kennzeichendatenbanken.",
+            "Dynamic Pricing": "Regelbasierte Standardtarife nach Dauer und Wochentag.",
+            "Signage & Displays": "LED-Restplatz- und Wegweiseranzeigen."
+        },
+        {
             "Wettbewerber": "Amano McGann",
             "Segment": "Enterprise Systemhaus (US/Asien)",
             "Control Center / Leitstand": "Amano ONE Command Center: Cloud-basierte Fernüberwachung für Schranken & Kassen, integrierter Call-Center-Support.",
@@ -311,7 +350,7 @@ with tab2:
             "Signage & Displays": "Fokus auf integrierte Display-Terminals und Parkleitsystem-Schnittstellen."
         },
 
-        # --- 2. Kamera- & Cloud-Disruptoren ---
+        # --- 2. Kamera- & Free-Flow Disruptoren ---
         {
             "Wettbewerber": "Peter Park",
             "Segment": "Cloud Disruptor (ANPR)",
@@ -321,12 +360,20 @@ with tab2:
             "Signage & Displays": "Partner-Integration für Begrüßungsanzeigen an der Zufahrt (Kennzeichen-Spiegelung, Hinweise)."
         },
         {
-            "Wettbewerber": "Parkdepot",
-            "Segment": "Cloud Disruptor (ANPR)",
-            "Control Center / Leitstand": "Parkdepot Backoffice: Fokus auf Falschparker-Evidenz und Verwarnungsprozesse; kein Operator-Leitstand für Schranken/Sprechanlagen.",
-            "APIs & Ökosystem": "Schnittstellen zu Supermarkt-Filialsystemen und Inkasso; eher geschlossenes Ökosystem.",
-            "Dynamic Pricing": "Fokus auf Freiparkdauern und Überschreitungstarife (Vertragsstrafen), kein dynamisches Yield-Management.",
-            "Signage & Displays": "Eigene Kamerasäulen mit integrierter Kennzeichen-Visualisierung zur Transparenz für Autofahrer."
+            "Wettbewerber": "WEMOLO (Parkdepot)",
+            "Segment": "Cloud Disruptor (ANPR/Retail)",
+            "Control Center / Leitstand": "WEMOLO Dashboard: Fokus auf automatisierte Fallbearbeitung, Beweisführung und Falschparker-Validierung; kein Operator-Leitstand für Schranken.",
+            "APIs & Ökosystem": "Schnittstellen zu Supermarkt-Filialsystemen (z. B. Kassenbon-Scan zur Rabattierung) und Inkassodiensten.",
+            "Dynamic Pricing": "Freiparkdauern mit progressiver Vertragsstrafe bei Überschreitung, kein klassisches Yield-Pricing.",
+            "Signage & Displays": "Eigene Kamerasäulen mit Front-Display zur Kennzeichen-Visualisierung und Transparenz."
+        },
+        {
+            "Wettbewerber": "fair parken",
+            "Segment": "Operator & ANPR-Disruptor",
+            "Control Center / Leitstand": "fair parken Leitwarte: Betreiber-Dashboard für Vertragsstrafen, Kunden-Kulanzanträge und Parkscheibenüberwachung per Sensor/ANPR.",
+            "APIs & Ökosystem": "Schnittstellen zu Einzelhandels-Partnern (Guthaben) und Bezahl-Apps (EasyPark).",
+            "Dynamic Pricing": "Fokus auf Freiparkdauern und Nachverfolgung, z. T. Bezahlparken auf Supermarktflächen nachts.",
+            "Signage & Displays": "Großflächige juristische Beschilderung vor Ort, zunehmend digitale Infotafeln."
         },
         {
             "Wettbewerber": "ARIVO",
@@ -337,6 +384,38 @@ with tab2:
             "Signage & Displays": "Unterstützung von LED-Restplatzanzeigen und Kennzeichenanzeigen an der Zufahrt."
         },
         {
+            "Wettbewerber": "AVANTPARK",
+            "Segment": "Free-Flow / Enforcement",
+            "Control Center / Leitstand": "AVANTPARK Cloud Portal: Fokus auf ANPR-Nachprüfung, Datenschutz-konforme Bildverarbeitung und Halterabfragen.",
+            "APIs & Ökosystem": "Anbindung von Web-Pay-Portalen (Zahlen bis 48h danach) und App-Zahlungsdiensten.",
+            "Dynamic Pricing": "Standard-Stundentarife und Überziehungspauschalen.",
+            "Signage & Displays": "Welcome-Displays mit Kennzeichenerkennungs-Feedback an der Einfahrt."
+        },
+        {
+            "Wettbewerber": "Autopay",
+            "Segment": "Skandinavischer Free-Flow Pionier",
+            "Control Center / Leitstand": "Autopay Operator Suite: Vollautomatisierter 24/7-Cloud-Betrieb, automatische ANPR-Abgleichung, minimale manuelle Eingriffe.",
+            "APIs & Ökosystem": "Umfassende API für nahtloses Auto-Debit (automatische Kreditkartenbelastung), Integration in EV-Ladenetzwerke.",
+            "Dynamic Pricing": "Vollständige Differenzierung nach Fahrzeugtyp, Uhrzeit, Mitgliedschaften und Auslastung.",
+            "Signage & Displays": "Zulauf-Displays mit Kennzeichen-Check und Hinweisen auf 48-Stunden-Zahlungsfristen im Web."
+        },
+        {
+            "Wettbewerber": "JJames",
+            "Segment": "ANPR & Ticketless (Österreich)",
+            "Control Center / Leitstand": "JJames Dashboard: Übersicht über Ein-/Ausfahrten, Kennzeichen-Validierung und manuelle Korrekturen.",
+            "APIs & Ökosystem": "Schnittstellen zu Schrankensteuerungen für Retrofit-Installationen und Web-Payment.",
+            "Dynamic Pricing": "Staffeltarife nach Kundenkategorie (Kurzparker vs. Mitarbeiter).",
+            "Signage & Displays": "Ansteuerung von Hinweistafeln zur Zahlungsaufforderung und Kennzeichenanzeige."
+        },
+        {
+            "Wettbewerber": "DigiPark",
+            "Segment": "ANPR & Enforcement (DACH)",
+            "Control Center / Leitstand": "DigiPark Backoffice: Web-Portal zur Erfassung von Parkverstößen und Freigabe von Dauerparkern.",
+            "APIs & Ökosystem": "Schnittstellen für White-Label-Bezahlung und Kundenfreischaltung.",
+            "Dynamic Pricing": "Feste Höchstparkdauern und Überschreitungstarife.",
+            "Signage & Displays": "Juristische Schildersätze und digitale Eingangsstelen."
+        },
+        {
             "Wettbewerber": "Smart City System",
             "Segment": "Sensor- & ANPR-Disruptor",
             "Control Center / Leitstand": "ParkAgent Platform: Visualisierung von Einzelflächen-Sensorik und ANPR-Kameras, Eskalations-Dashboard für Parkverstöße.",
@@ -344,16 +423,34 @@ with tab2:
             "Dynamic Pricing": "Eher statische Zeitzonenüberwachung (z. B. Kurzzeitparken 2h), keine Yield-Engine.",
             "Signage & Displays": "Kopplung an digitale Hinweisschilder und dynamische Zonenwegweiser."
         },
+
+        # --- 3. Corporate & Shared Parking Software ---
         {
-            "Wettbewerber": "Autopay (Nordics)",
-            "Segment": "Skandinavischer Free-Flow Pionier",
-            "Control Center / Leitstand": "Autopay Operator Suite: Vollautomatisierter 24/7-Cloud-Betrieb, automatische ANPR-Abgleichung, minimale manuelle Eingriffe.",
-            "APIs & Ökosystem": "Umfassende API für nahtloses Auto-Debit (automatische Kreditkartenbelastung), Integration in EV-Ladenetzwerke.",
-            "Dynamic Pricing": "Vollständige Differenzierung nach Fahrzeugtyp, Uhrzeit, Mitgliedschaften und Auslastung.",
-            "Signage & Displays": "Zulauf-Displays mit Kennzeichen-Check und Hinweisen auf 48-Stunden-Zahlungsfristen im Web."
+            "Wettbewerber": "ParkHere",
+            "Segment": "Corporate & IoT Parking",
+            "Control Center / Leitstand": "ParkHere Corporate Admin: Buchungskalender für Mitarbeiter, Zuteilungs-Logik, Schrankenfreigabe per Kennzeichen/App.",
+            "APIs & Ökosystem": "Integration in Microsoft Teams, Outlook, Workday, SAP und Gebäudeleittechnik.",
+            "Dynamic Pricing": "Mitarbeiter-Guthabenmodelle, Ladeabrechnung und Firmenkontingentierung.",
+            "Signage & Displays": "Display-Stelen an Werkstoren mit Namens-/Kennzeichen-Begrüßung und Parkplatz-Zuweisung."
+        },
+        {
+            "Wettbewerber": "ParkEfficient",
+            "Segment": "Corporate Parking Software",
+            "Control Center / Leitstand": "ParkEfficient Portal: Kein Leitstand für Schrankenstörungen; Fokus auf Belegungsoptimierung und Parkplatz-Sharing im Unternehmen.",
+            "APIs & Ökosystem": "HR- und Kalender-Schnittstellen (MS Exchange, Azure AD) zur Mitarbeiter-Identifikation.",
+            "Dynamic Pricing": "Interne Verrechnungssätze und Mobilitätsbudgets.",
+            "Signage & Displays": "Digitale Zonenanzeigen auf Firmenparkplätzen."
+        },
+        {
+            "Wettbewerber": "BeParking (AU)",
+            "Segment": "Retrofit & Ticketless Platform",
+            "Control Center / Leitstand": "BeParking Cloud Hub: Gateway-Lösung zur Fernsteuerung bestehender Schrankenanlagen fremder Hersteller.",
+            "APIs & Ökosystem": "Edge-Controller-APIs für Fremdhardware, Anbindung von Payment-Gateways und QR-Codes.",
+            "Dynamic Pricing": "Webbasierte Preisregeln nach Tageszeit und Wochentag.",
+            "Signage & Displays": "Unterstützung externer LED-Displays zur Schrankenstatus-Anzeige."
         },
 
-        # --- 3. US Plattformen ---
+        # --- 4. US Tech-Plattformen & CV ---
         {
             "Wettbewerber": "Flash (USA)",
             "Segment": "US Cloud Platform",
@@ -371,7 +468,7 @@ with tab2:
             "Signage & Displays": "Fokus auf Smartphone-Benachrichtigung statt physischer Vor-Ort-Displays."
         },
 
-        # --- 4. Mobility & Payment Aggregatoren ---
+        # --- 5. Mobility & Payment Aggregatoren ---
         {
             "Wettbewerber": "EasyPark",
             "Segment": "Mobility & Payment Aggregator",
@@ -444,13 +541,13 @@ with tab2:
     with c1:
         with st.expander("🏢 Leitstand-Vergleich: Systemhaus vs. Cloud-Disruptor"):
             st.markdown("""
-            * **Klassische Systemhäuser (SKIDATA, Scheidt & Bachmann, HUB):**
+            * **Klassische Systemhäuser (SKIDATA, Scheidt & Bachmann, HUB, WPS, Orbility):**
               * Bieten echte **24/7-Leitwarten-Architekturen** für Großbetreiber.
               * SIP/VoIP-Intercom-Routing, Video-Zuschaltung, direkte Schrankenfernsteuerung, Kassenstörungs-Handling.
-              * Unverzichtbar für Betreiber mit Sicherheitsauflagen (z. B. Flughäfen, Spitäler, städtische Großgaragen).
-            * **Reine ANPR-Disruptoren (Peter Park, Parkdepot):**
+              * Unverzichtbar für Betreiber mit Sicherheitsauflagen (Flughäfen, Spitäler, städtische Großgaragen).
+            * **Reine ANPR-Disruptoren (Peter Park, WEMOLO, fair parken):**
               * Besitzen **keinen physischen Hardware-Leitstand**, da Schranken und Intercoms entfallen.
-              * Das 'Control Center' beschränkt sich auf Belegungsanzeige, ANPR-Nachverifikation bei unleserlichen Schildern und Falschparker-Listen.
+              * Das 'Control Center' beschränkt sich auf Belegungsanzeige, ANPR-Nachverifikation und Falschparker-Listen.
               * *Verkaufsargument:* Großbetreiber können mit reinen Disruptoren bestehende Schranken- und Sprechanlagen-Workflows nicht abbilden.
             """)
 
@@ -480,12 +577,16 @@ with tab3:
         * **Modell:** Schrankenlose Bewirtschaftung via Kennzeichenerkennung (ANPR) mit Cloud-Backend (*CityFlow*).
         * **Treiber:** Starkes Wachstumskapital, aggressive Expansion im DACH-Raum und UK.
         * **Ökosystem:** Tief verknüpft mit App-Bezahldiensten (EasyPark CameraPark, Parkster).
-        * 💡 **PM-Schlussfolgerung:** Verdrängt Schranken und Kassen im Retail- und Kommunalbereich durch geringe Vorab-Investitionen (CapEx).
+        * 💡 **PM-Schlussfolgerung:** Verdrängt Schranken und Kassen im Retail- und Kommunalbereich durch minimale Vorab-Investitionen (CapEx).
         """,
-        "Parkdepot": """
-        * **Modell:** Full-Service-Parkraumüberwachung für den Einzelhandel mit eigener modularer KI-Kamerahardware.
-        * **Stärken:** Hohe Standardisierung bei Supermärkten (Rewe, Lidl, Aldi) und automatisierte Fallbearbeitung von Falschparkern.
-        * 💡 **PM-Schlussfolgerung:** Im Discounter-Umfeld kaum mit Kassenhardware zu schlagen. Klassische Systeme müssen sich auf Multi-Use-Flächen mit komplexeren Tarifen konzentrieren.
+        "WEMOLO (Parkdepot)": """
+        * **Modell:** Full-Service-Parkraumüberwachung für den Einzelhandel (Ex-Parkdepot). Eigene modulare KI-Kamerahardware.
+        * **Stärken:** Hohe Marktdurchdringung bei Supermärkten (Rewe, Aldi, Lidl, Kaufland) und automatisierte Fallbearbeitung von Falschparkern.
+        * 💡 **PM-Schlussfolgerung:** Im reinen Discounter-Umfeld kaum mit Kassenhardware zu schlagen. Etablierte Systemhäuser müssen sich auf Multi-Use-Flächen mit komplexeren Tarifen konzentrieren.
+        """,
+        "fair parken": """
+        * **Modell:** Größter deutscher Bewirtschafter von Kunden- und Klinikparkplätzen. Starke Umrüstung von Parkscheibe auf Free-Flow-Kameras.
+        * 💡 **PM-Schlussfolgerung:** Bietet Komplettpakete inkl. Parkraumservice vor Ort und Zahlungsnachverfolgung.
         """,
         "SKIDATA": """
         * **Modell:** Ganzheitliche Zutritts- und Abrechnungssysteme unter ASSA ABLOY. Transformation via *SKIDATA Connect*.
@@ -501,6 +602,30 @@ with tab3:
         * **Modell:** Modulare Systemhaus-Lösungen rund um die *Jupiter*-Serie und das *JMS (Janus Management System)*.
         * **Stärken:** Starkes weltweites Distributionsnetzwerk über die FAAC-Muttergesellschaft.
         * 💡 **PM-Schlussfolgerung:** Robuster Konkurrent bei traditionellen Ausschreibungen (Flughäfen, Spitäler, Universitäten).
+        """,
+        "WPS Parking": """
+        * **Modell:** Niederländischer Systemhaus-Pionier mit *ParkAdvance* und Cloud-Ausrichtung.
+        * 💡 **PM-Schlussfolgerung:** Starker europäischer Wettbewerber bei Betreibern, die auf Barcode-Tickets und schrankenlose Hybridsysteme setzen.
+        """,
+        "IP Parking": """
+        * **Modell:** Niederländischer Cloud-Challenger mit *ParkBase*. Wachsende Präsenz in Westeuropa und den USA.
+        * 💡 **PM-Schlussfolgerung:** Nutzt offene Webstandards und APIs, um klassische Anbieter über modernere Software-Architektur herauszufordern.
+        """,
+        "ICA Traffic": """
+        * **Modell:** Deutscher Spezialist für Ticketing, Kassenautomaten und Schrankensysteme im kommunalen und Bahn-Umfeld.
+        * 💡 **PM-Schlussfolgerung:** Extrem stark bei Ausschreibungen von Kommunen und Verkehrsverbünden, wo hohe Standards für Bargeld und ÖPNV gefordert sind.
+        """,
+        "Orbility": """
+        * **Modell:** Französischer Marktführer mit globaler Präsenz (Ex-ACS/Ascom).
+        * 💡 **PM-Schlussfolgerung:** Hauptkonkurrent bei weltweiten Großausschreibungen für Flughäfen und zentrale Innenstadtgaragen.
+        """,
+        "Meypar": """
+        * **Modell:** Traditioneller spanischer Hersteller robuster Hard- und Software für Garagen.
+        * 💡 **PM-Schlussfolgerung:** Stark in Südeuropa und Lateinamerika verankert.
+        """,
+        "Equinsa": """
+        * **Modell:** Spanischer Systemanbieter für Parkschranken, Kassen und Kontrollsysteme.
+        * 💡 **PM-Schlussfolgerung:** Fokussiert auf den iberischen Markt mit budgetfreundlichen Komplettlösungen.
         """,
         "Flowbird": """
         * **Modell:** Weltmarktführer bei Straßen-Parkscheinautomaten, der zunehmend in Off-Street-Parken und Open-Payment drängt.
@@ -519,25 +644,49 @@ with tab3:
         * **Modell:** Radikales Computer-Vision-System ("Drive in, Drive out"). Durch Kauf von SP+ einer der größten US-Betreiber.
         * 💡 **PM-Schlussfolgerung:** Zeigt das Extrem: Kassenhardware wird komplett überflüssig, Software und KI übernehmen alles.
         """,
-        "Autopay (Nordics)": """
-        * **Modell:** Vorreiter für schrankenlose Kennzeichenerfassung in Skandinavien; fast 100% Marktdurchdringung in einigen Regionen.
-        * 💡 **PM-Schlussfolgerung:** Blaupause dafür, wie schnell schrankenlose Systeme klassische Schranken in technikaffinen Ländern verdrängen können.
-        """,
-        "Smart City System": """
-        * **Modell:** Sensor- und ANPR-basierte Parkraumerfassung mit der Management-Plattform *ParkAgent*.
-        * 💡 **PM-Schlussfolgerung:** Bietet schlanke digitale Lösungen zur Überwachung von Mischflächen und Falschparkern.
-        """,
-        "EasyPark": """
-        * **Modell:** Größter Park-App-Aggregator Europas.
-        * 💡 **PM-Schlussfolgerung:** Greift über *CameraPark* das Transaktionsgeschäft an: Der Autofahrer nutzt die App statt den Kassenautomaten.
-        """,
-        "Parkster": """
-        * **Modell:** Stark wachsende gebührenfreie Park-App in DACH und Skandinavien.
-        * 💡 **PM-Schlussfolgerung:** Wichtiger Partner für schrankenlose Betreiber zur Abwicklung mobiler Zahlungen.
+        "Autopay": """
+        * **Modell:** Vorreiter für schrankenlose Kennzeichenerfassung in Skandinavien; expandiert über Autopay.de stark in DACH.
+        * 💡 **PM-Schlussfolgerung:** Blaupause für maximale Automatisierung ohne Vor-Ort-Personal.
         """,
         "ARIVO": """
         * **Modell:** Österreichischer Anbieter modularer ANPR-Lösungen (mit oder ohne Schranke).
         * 💡 **PM-Schlussfolgerung:** Zeigt, dass auch kleinere Anbieter mit hoher Schnittstellen-Flexibilität und fairen Preisen punkten können.
+        """,
+        "AVANTPARK": """
+        * **Modell:** Free-Flow ANPR-Überwachung für Parkplätze in Deutschland und Nordeuropa.
+        * 💡 **PM-Schlussfolgerung:** Drängt bei Einzelhandel und Fachmärkten auf den Markt mit 48h-Zahlungsmodellen.
+        """,
+        "JJames": """
+        * **Modell:** Österreichischer Spezialist für Schranken- und Kennzeichentechnik (Retrofit).
+        * 💡 **PM-Schlussfolgerung:** Bietet unkomplizierte Nachrüstungen für bestehende Betreiber ohne Gesamttausch.
+        """,
+        "DigiPark": """
+        * **Modell:** Digitale Parkplatzüberwachung und Kennzeichenerkennung für Gewerbe- und Kundenflächen.
+        * 💡 **PM-Schlussfolgerung:** Konzentriert sich auf automatisierte Fallbearbeitung für Eigentümer.
+        """,
+        "Smart City System": """
+        * **Modell:** Sensor- und ANPR-basierte Parkraumerfassung mit der Management-Plattform *ParkAgent*.
+        * 💡 **PM-Schlussfolgerung:** Schlanke digitale Lösungen zur Überwachung von Mischflächen und Falschparkern.
+        """,
+        "ParkHere": """
+        * **Modell:** Münchner Spezialist für betriebliches Parkraummanagement (Corporate Mobility).
+        * 💡 **PM-Schlussfolgerung:** Zeigt, wie B2B-Kunden Parkplätze an Mitarbeiter zuteilen und Ladesäulen integrieren.
+        """,
+        "ParkEfficient": """
+        * **Modell:** Software-Plattform zur internen Parkplatzkontingentierung bei Großkonzernen.
+        * 💡 **PM-Schlussfolgerung:** Rein softwaregetriebenes Shared-Parking-Modell ohne Fokus auf Kassenautomaten.
+        """,
+        "BeParking (AU)": """
+        * **Modell:** Australischer Plattform-Anbieter für ticketlose Schranken-Nachrüstungen via Edge-Controller.
+        * 💡 **PM-Schlussfolgerung:** Spannender Ansatz zur Verlängerung der Lebensdauer alter Hardware.
+        """,
+        "EasyPark": """
+        * **Modell:** Größter Park-App-Aggregator Europas.
+        * 💡 **PM-Schlussfolgerung:** Greift über *CameraPark* das Transaktionsgeschäft an: Autofahrer zahlen per App statt am Kassenautomaten.
+        """,
+        "Parkster": """
+        * **Modell:** Stark wachsende gebührenfreie Park-App in DACH und Skandinavien.
+        * 💡 **PM-Schlussfolgerung:** Wichtiger Partner für schrankenlose Betreiber zur Abwicklung mobiler Zahlungen.
         """
     }
 
