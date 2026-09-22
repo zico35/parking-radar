@@ -12,44 +12,52 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
-# --- Datenquellen: Vollständiges Wettbewerber-Set ---
+# --- Datenquellen: Schlankere, treffsichere Suchbegriffe ---
 COMPETITORS = {
-    # 1. Klassische Systemhäuser & globale Hardware-/Software-Konzerne
-    "SKIDATA": 'allintext:"SKIDATA" (Connect OR Parkhaus OR Schranke OR Kooperation OR Flughafen)',
-    "Scheidt & Bachmann": 'allintext:"Scheidt & Bachmann" (entervo OR "mobility CONNECT" OR Parksysteme)',
-    "HUB Parking (FAAC)": 'allintext:"HUB Parking" OR allintext:"FAAC" (Parking OR JMS OR Schranke)',
-    "Amano McGann": 'allintext:"Amano McGann" OR (Amano AND "Parking Systems")',
-    "Flowbird": 'allintext:"Flowbird" (Parking OR Parkscheinautomat OR "Open Payment" OR Mobility)',
+    # 1. Klassische Systemhäuser
+    "SKIDATA": '"SKIDATA"',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann"',
+    "HUB Parking (FAAC)": '"HUB Parking" OR "FAAC"',
+    "Amano McGann": '"Amano McGann"',
+    "Flowbird": '"Flowbird"',
     
-    # 2. Reine Kamera- & Schrankenlos-Disruptoren (Camera-Only / Cloud-SaaS)
-    "Peter Park": 'allintext:"Peter Park" (Parken OR ANPR OR Schrankenlos OR CityFlow)',
-    "Parkdepot": 'allintext:"Parkdepot" (Parkplatz OR Kamera OR Supermarkt OR Software)',
-    "ARIVO": 'allintext:"ARIVO" (Parken OR Kennzeichenerkennung OR Schrankenlos)',
-    "Smart City System": 'allintext:"Smart City System" OR allintext:"ParkAgent" (Parken OR Sensoren OR ANPR)',
-    "Autopay (Nordics)": 'allintext:"Autopay" (Parking OR ANPR OR "barrier-free")',
+    # 2. Kamera & Cloud Disruptoren
+    "Peter Park": '"Peter Park" Parken',
+    "Parkdepot": '"Parkdepot"',
+    "ARIVO": '"ARIVO" Parken',
+    "Smart City System": '"Smart City System" OR "ParkAgent"',
+    "Autopay (Nordics)": '"Autopay" Parking',
 
-    # 3. US Cloud-Plattformen & Computer-Vision Giganten
-    "Flash (USA)": 'allintext:"FlashParking" OR (allintext:"Flash" AND Parking AND Cloud)',
-    "Metropolis (USA)": 'allintext:"Metropolis" (Parking OR "SP+" OR "Computer Vision")',
+    # 3. US / Plattform-Giganten
+    "Flash (USA)": '"FlashParking" OR "Flash Parking"',
+    "Metropolis (USA)": '"Metropolis" Parking',
 
-    # 4. Mobility- & Payment-Aggregatoren
-    "EasyPark": 'allintext:"EasyPark" ("CameraPark" OR Schrankenlos OR Parkplatz OR Akquisition)',
-    "Parkster": 'allintext:"Parkster" (Parken OR Kooperation OR App)'
+    # 4. Mobility & Apps
+    "EasyPark": '"EasyPark"',
+    "Parkster": '"Parkster"'
 }
 
-# --- Cache-gestützte Datenabfrage (1 Stunde Cache für schnelle Performance) ---
-@st.cache_data(ttl=3600)
+# --- Cache-gestützte Datenabfrage mit Browser-Header ---
+@st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
+    # Standard-Browser-Header, damit Google News nicht blockiert
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
     for comp, query in COMPETITORS.items():
         encoded = urllib.parse.quote(query)
+        # Suche auf Deutsch und international abgestimmt
         rss_url = f"https://news.google.com/rss/search?q={encoded}&hl=de&gl=DE&ceid=DE:de"
-        feed = feedparser.parse(rss_url)
         
-        for entry in feed.entries[:4]:  # Die 4 neuesten Meldungen je Anbieter
+        feed = feedparser.parse(rss_url, request_headers=headers)
+        
+        for entry in feed.entries[:5]:  # Bis zu 5 Treffer pro Mitbewerber
             title = entry.title
-            tags = []
             title_lower = title.lower()
+            
+            tags = []
             if any(k in title_lower for k in ["kooperation", "partner", "allianz", "schließt sich", "vertrag"]):
                 tags.append("Kooperation")
             if any(k in title_lower for k in ["kamera", "anpr", "schrankenlos", "free-flow", "kennzeichen"]):
@@ -70,6 +78,7 @@ def fetch_live_news():
                 "published": entry.get("published", ""),
                 "tags": tags
             })
+            
     return news_items
 
 # --- Navigation Tabs ---
