@@ -55,6 +55,9 @@ def fetch_live_news():
         for entry in feed.entries[:5]:  # Bis zu 5 Treffer pro Mitbewerber
             title = entry.title
             title_lower = title.lower()
+
+            if "linkedin.com" in entry.link:
+            tags.append("LinkedIn")
             
             tags = []
             if any(k in title_lower for k in ["kooperation", "partner", "allianz", "schließt sich", "vertrag"]):
