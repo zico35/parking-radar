@@ -4,7 +4,7 @@ import urllib.parse
 import email.utils
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import socket
+import requests
 
 # --- Seitenkonfiguration ---
 st.set_page_config(
@@ -19,142 +19,186 @@ st.caption("Echtzeit-Marktüberblick, Leitstand-Architektur & PM-Strategie für 
 # --- Datenquellen: Vollständiges PM-Fachvokabular (28 Wettbewerber) ---
 COMPETITORS = {
     # 1. Globale & DACH Enterprise Systemhäuser
-    "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier OR airport) when:90d',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parking OR entervo OR "mobility CONNECT" OR ticketless OR gateless) when:90d',
-    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") (JMS OR ticketless OR "free flow" OR barrier) when:90d',
-    "Amano McGann": '("Amano McGann" OR "Amano Parking") ("Amano ONE" OR ticketless OR gateless) when:90d',
-    "Flowbird": '"Flowbird" (Parking OR "pay-by-plate" OR ticketless OR "open payment" OR enforcement) when:90d',
-    "WPS Parking": '("WPS Parking" OR "WPS ParkAdvance") (ticketless OR barrier OR cloud) when:90d',
-    "IP Parking": '"IP Parking" (ParkBase OR ticketless OR barrier OR cloud) when:90d',
-    "ICA Traffic": '("ICA Traffic" OR "ICA Parking") (Kassenautomat OR ticketless OR Schranke) when:90d',
-    "Orbility": '"Orbility" (Parking OR ticketless OR barrier OR airport) when:90d',
-    "Meypar": '"Meypar" (Parking OR ticketless OR barrier OR "control de accesos") when:90d',
-    "Equinsa": '"Equinsa" (Parking OR aparcamiento OR ticketless OR barrera) when:90d',
+    "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier OR airport)',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parking OR entervo OR "mobility CONNECT" OR ticketless OR gateless)',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") (JMS OR ticketless OR "free flow" OR barrier)',
+    "Amano McGann": '("Amano McGann" OR "Amano Parking") ("Amano ONE" OR ticketless OR gateless)',
+    "Flowbird": '"Flowbird" (Parking OR "pay-by-plate" OR ticketless OR "open payment" OR enforcement)',
+    "WPS Parking": '("WPS Parking" OR "WPS ParkAdvance") (ticketless OR barrier OR cloud)',
+    "IP Parking": '"IP Parking" (ParkBase OR ticketless OR barrier OR cloud)',
+    "ICA Traffic": '("ICA Traffic" OR "ICA Parking") (Kassenautomat OR ticketless OR Schranke)',
+    "Orbility": '"Orbility" (Parking OR ticketless OR barrier OR airport)',
+    "Meypar": '"Meypar" (Parking OR ticketless OR barrier OR "control de accesos")',
+    "Equinsa": '"Equinsa" (Parking OR aparcamiento OR ticketless OR barrera)',
 
     # 2. Free-Flow, ANPR & Retail-Disruptoren
-    "Peter Park": '"Peter Park" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR CityFlow OR enforcement) when:90d',
-    "WEMOLO (Parkdepot)": '("WEMOLO" OR "Parkdepot") (Parkplatz OR Parking OR enforcement OR "free-flow" OR camera) when:90d',
-    "fair parken": '"fair parken" (Parkplatz OR schrankenlos OR Kennzeichen OR ANPR OR Überwachung) when:90d',
-    "ARIVO": '"ARIVO" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR Schrankenlos) when:90d',
-    "AVANTPARK": '"AVANTPARK" (Parken OR Parking OR ANPR OR schrankenlos OR Kennzeichen) when:90d',
-    "Autopay": '("Autopay" OR "Autopay.de") (Parking OR ticketless OR "free-flow" OR ANPR OR frictionless) when:90d',
-    "JJames": '"JJames" (Parken OR Parking OR Schranken OR Kennzeichenerkennung OR ANPR) when:90d',
-    "DigiPark": '"DigiPark" (Parken OR Kennzeichen OR schrankenlos OR Parkraumüberwachung) when:90d',
-    "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor OR ANPR) when:90d',
+    "Peter Park": '"Peter Park" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR CityFlow OR enforcement)',
+    "WEMOLO (Parkdepot)": '("WEMOLO" OR "Parkdepot") (Parkplatz OR Parking OR enforcement OR "free-flow" OR camera)',
+    "fair parken": '"fair parken" (Parkplatz OR schrankenlos OR Kennzeichen OR ANPR OR Überwachung)',
+    "ARIVO": '"ARIVO" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR Schrankenlos)',
+    "AVANTPARK": '"AVANTPARK" (Parken OR Parking OR ANPR OR schrankenlos OR Kennzeichen)',
+    "Autopay": '("Autopay" OR "Autopay.de") (Parking OR ticketless OR "free-flow" OR ANPR OR frictionless)',
+    "JJames": '"JJames" (Parken OR Parking OR Schranken OR Kennzeichenerkennung OR ANPR)',
+    "DigiPark": '"DigiPark" (Parken OR Kennzeichen OR schrankenlos OR Parkraumüberwachung)',
+    "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor OR ANPR)',
 
     # 3. Corporate & Shared Parking Software
-    "parkoneer (S&B)": '("parkoneer" OR "Scheidt & Bachmann parkoneer") (Mitarbeiterparken OR Corporate OR Parking OR ANPR) when:90d',
-    "ParkHere": '"ParkHere" (Parkplatz OR Parken OR Corporate OR Schranke OR IoT) when:90d',
-    "ParkEfficient": '"ParkEfficient" (Parkplatz OR Corporate OR Parkraummanagement OR Kontingent) when:90d',
-    "BeParking (AU)": '("BeParking" OR "Becas") (Parking OR ticketless OR retrofit OR "barrier integration") when:90d',
+    "parkoneer (S&B)": '("parkoneer" OR "Scheidt & Bachmann parkoneer") (Mitarbeiterparken OR Corporate OR Parking OR ANPR)',
+    "ParkHere": '"ParkHere" (Parkplatz OR Parken OR Corporate OR Schranke OR IoT)',
+    "ParkEfficient": '"ParkEfficient" (Parkplatz OR Corporate OR Parkraummanagement OR Kontingent)',
+    "BeParking (AU)": '("BeParking" OR "Becas") (Parking OR ticketless OR retrofit OR "barrier integration")',
 
     # 4. US Plattformen & Computer Vision
-    "Flash (USA)": '("FlashParking" OR "Flash Parking") (cloud OR EV OR "dynamic pricing" OR ticketless) when:90d',
-    "Metropolis (USA)": '"Metropolis" (Parking OR "drive-through" OR "checkout-free" OR "computer vision") when:90d',
+    "Flash (USA)": '("FlashParking" OR "Flash Parking") (cloud OR EV OR "dynamic pricing" OR ticketless)',
+    "Metropolis (USA)": '"Metropolis" (Parking OR "drive-through" OR "checkout-free" OR "computer vision")',
 
     # 5. Mobility & Payment Aggregatoren
-    "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition OR partnership) when:90d',
-    "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership) when:90d'
+    "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition OR partnership)',
+    "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership)'
 }
 
-# Timeout für Netzwerk-Requests auf 5 Sekunden deckeln (verhindert ewiges Hängen)
-socket.setdefaulttimeout(5.0)
+# --- Robuster Feed-Download via requests ---
+def _fetch_rss(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8"
+    }
+    try:
+        resp = requests.get(url, headers=headers, timeout=8)
+        if resp.status_code == 200:
+            return feedparser.parse(resp.content)
+    except Exception:
+        pass
+    return None
 
 def _scrape_single_competitor(comp, query):
-    """Holt die Feeds für einen einzelnen Wettbewerber (wird parallel ausgeführt)."""
     items = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    feed_locales = [
+    clean_query = query.replace(" when:90d", "")
+    encoded = urllib.parse.quote(clean_query)
+
+    locales = [
         "hl=de&gl=DE&ceid=DE:de",
         "hl=en-US&gl=US&ceid=US:en"
     ]
-    encoded = urllib.parse.quote(query)
 
-    for locale in feed_locales:
+    for locale in locales:
         rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
-        try:
-            feed = feedparser.parse(rss_url, request_headers=headers)
-            for entry in feed.entries[:4]:
-                link = entry.link
-                title = entry.title
-                title_lower = title.lower()
-
-                # Filter gegen Spam & HR-Profile
-                if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
-                    continue
-                if "linkedin.com/in/" in link:
-                    continue
-
-                # Datum parsen
-                pub_date_str = entry.get("published", "")
-                dt_obj = datetime.min
-                if pub_date_str:
-                    try:
-                        dt_obj = email.utils.parsedate_to_datetime(pub_date_str)
-                    except Exception:
-                        dt_obj = datetime.min
-
-                # Tag-Erkennung
-                tags = []
-                if "linkedin.com" in link or "linkedin" in title_lower:
-                    tags.append("LinkedIn")
-                if any(k in title_lower for k in ["control center", "leitstand", "leitwarte", "remote", "intercom", "voip", "monitoring", "dispatch", "operator", "jms", "command"]):
-                    tags.append("Control Center / Leitstand")
-                if any(k in title_lower for k in ["api", "webhook", "sdk", "marketplace", "marktplatz", "schnittstelle", "integrat", "open platform", "ecosystem"]):
-                    tags.append("APIs / Marktplatz")
-                if any(k in title_lower for k in ["dynamic pricing", "tarifierung", "yield", "flexible tarife", "surge pricing", "variable rates", "pricing"]):
-                    tags.append("Dynamic Pricing")
-                if any(k in title_lower for k in ["signage", "display", "anzeige", "led", "vms", "wayfinding", "screen", "stelen", "information display"]):
-                    tags.append("Signage / Displays")
-                if any(k in title_lower for k in ["ticketless", "free-flow", "free flow", "frictionless", "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"]):
-                    tags.append("Free-Flow / Ticketless")
-                if any(k in title_lower for k in ["shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"]):
-                    tags.append("Shared Parking")
-                if any(k in title_lower for k in ["enforcement", "falschparker", "violation", "compliance", "validation"]):
-                    tags.append("Enforcement / Überwachung")
-                if any(k in title_lower for k in ["kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"]):
-                    tags.append("Kooperation")
-                if any(k in title_lower for k in ["kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"]):
-                    tags.append("Hardware / POS")
-                if any(k in title_lower for k in ["ev", "charging", "ladesäule", "strom", "energy", "ocpi"]):
-                    tags.append("EV / Energie")
-                if not tags:
-                    tags.append("Projekt / News")
-
-                items.append({
-                    "competitor": comp,
-                    "title": title,
-                    "link": link,
-                    "published": pub_date_str,
-                    "dt": dt_obj,
-                    "tags": tags
-                })
-        except Exception:
-            # Falls Google mal einen Feed blockiert oder verzögert, läuft der Rest einfach weiter
+        feed = _fetch_rss(rss_url)
+        if not feed or not feed.entries:
             continue
+
+        for entry in feed.entries[:4]:
+            link = getattr(entry, "link", "")
+            title = getattr(entry, "title", "")
+            title_lower = title.lower()
+
+            # Filter gegen Stellenanzeigen, Lebensläufe und Spam
+            if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
+                continue
+            if "linkedin.com/in/" in link:
+                continue
+
+            # Datum parsen für exakte Sortierung
+            pub_date_str = entry.get("published", "")
+            dt_obj = datetime.min
+            if pub_date_str:
+                try:
+                    dt_obj = email.utils.parsedate_to_datetime(pub_date_str)
+                except Exception:
+                    dt_obj = datetime.min
+
+            # --- Strategische Tag-Erkennung ---
+            tags = []
+            if "linkedin.com" in link or "linkedin" in title_lower:
+                tags.append("LinkedIn")
+
+            if any(k in title_lower for k in [
+                "control center", "leitstand", "leitwarte", "remote", "intercom", 
+                "voip", "monitoring", "dispatch", "operator", "jms", "command"
+            ]):
+                tags.append("Control Center / Leitstand")
+
+            if any(k in title_lower for k in [
+                "api", "webhook", "sdk", "marketplace", "marktplatz", 
+                "schnittstelle", "integrat", "open platform", "ecosystem"
+            ]):
+                tags.append("APIs / Marktplatz")
+
+            if any(k in title_lower for k in [
+                "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
+                "surge pricing", "variable rates", "pricing"
+            ]):
+                tags.append("Dynamic Pricing")
+
+            if any(k in title_lower for k in [
+                "signage", "display", "anzeige", "led", "vms", 
+                "wayfinding", "screen", "stelen", "information display"
+            ]):
+                tags.append("Signage / Displays")
+
+            if any(k in title_lower for k in [
+                "ticketless", "free-flow", "free flow", "frictionless", 
+                "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
+            ]):
+                tags.append("Free-Flow / Ticketless")
+
+            if any(k in title_lower for k in [
+                "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"
+            ]):
+                tags.append("Shared Parking")
+
+            if any(k in title_lower for k in [
+                "enforcement", "falschparker", "violation", "compliance", "validation"
+            ]):
+                tags.append("Enforcement / Überwachung")
+
+            if any(k in title_lower for k in [
+                "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
+            ]):
+                tags.append("Kooperation")
+
+            if any(k in title_lower for k in [
+                "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
+            ]):
+                tags.append("Hardware / POS")
+
+            if any(k in title_lower for k in [
+                "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
+            ]):
+                tags.append("EV / Energie")
+
+            if not tags:
+                tags.append("Projekt / News")
+
+            items.append({
+                "competitor": comp,
+                "title": title,
+                "link": link,
+                "published": pub_date_str,
+                "dt": dt_obj,
+                "tags": tags
+            })
     return items
 
-# --- Cache-gestützte parallele Datenabfrage ---
+# --- Parallele Abfrage mit st.cache_data ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     all_results = []
     seen_links = set()
 
-    # 10 Anfragen gleichzeitig abfeuern (Multithreading)
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [
-            executor.submit(_scrape_single_competitor, comp, query)
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(_scrape_single_competitor, comp, query): comp
             for comp, query in COMPETITORS.items()
-        ]
+        }
         for future in as_completed(futures):
             try:
                 res = future.result()
-                for item in res:
-                    if item["link"] not in seen_links:
-                        seen_links.add(item["link"])
-                        all_results.append(item)
+                if res:
+                    for item in res:
+                        if item["link"] not in seen_links:
+                            seen_links.add(item["link"])
+                            all_results.append(item)
             except Exception:
                 continue
 
