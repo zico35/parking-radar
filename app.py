@@ -14,7 +14,7 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Leitstand-Architektur & PM-Strategie für moderne Park- & Mobilitätssysteme")
 
-# --- Datenquellen: Vollständiges PM-Fachvokabular (27 Wettbewerber weltweit) ---
+# --- Datenquellen: Vollständiges PM-Fachvokabular (28 Wettbewerber) ---
 COMPETITORS = {
     # 1. Globale & DACH Enterprise Systemhäuser
     "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier OR airport) when:90d',
@@ -41,6 +41,7 @@ COMPETITORS = {
     "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor OR ANPR) when:90d',
 
     # 3. Corporate & Shared Parking Software
+    "parkoneer (S&B)": '("parkoneer" OR "Scheidt & Bachmann parkoneer") (Mitarbeiterparken OR Corporate OR Parking OR ANPR) when:90d',
     "ParkHere": '"ParkHere" (Parkplatz OR Parken OR Corporate OR Schranke OR IoT) when:90d',
     "ParkEfficient": '"ParkEfficient" (Parkplatz OR Corporate OR Parkraummanagement OR Kontingent) when:90d',
     "BeParking (AU)": '("BeParking" OR "Becas") (Parking OR ticketless OR retrofit OR "barrier integration") when:90d',
@@ -83,7 +84,7 @@ def fetch_live_news():
                 title = entry.title
                 title_lower = title.lower()
 
-                # Spam-, Profil- und Stellenanzeigen-Filter
+                # Filter gegen Personenprofile, Stellenanzeigen und Spam
                 if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
                     continue
                 if "linkedin.com/in/" in link:
@@ -136,7 +137,7 @@ def fetch_live_news():
                     tags.append("Free-Flow / Ticketless")
 
                 if any(k in title_lower for k in [
-                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate"
+                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"
                 ]):
                     tags.append("Shared Parking")
 
@@ -426,6 +427,14 @@ with tab2:
 
         # --- 3. Corporate & Shared Parking Software ---
         {
+            "Wettbewerber": "parkoneer (S&B)",
+            "Segment": "Corporate & Mixed-Use (Scheidt & Bachmann)",
+            "Control Center / Leitstand": "parkoneer Portal: Reines Cloud-Portal für Flächenmanager & HR zur Mitarbeiterverwaltung; keine klassische 24/7-Leitwarte für Fremdfahrzeuge.",
+            "APIs & Ökosystem": "Schnittstellen zu HR-Systemen, Single-Sign-On (SSO) und Anbindung an entervo-Backend für Misch-Standorte.",
+            "Dynamic Pricing": "Dynamische Kontingentierung und Berechtigungssteuerung (z. B. Bezahlung/Guthabenabzug für Mitarbeiter und Besucher).",
+            "Signage & Displays": "'parkoneer Sign': Eigene digitale LED-/Display-Stele an der Zufahrt für individuelle Kennzeichenbegrüßung und dynamische Hinweise."
+        },
+        {
             "Wettbewerber": "ParkHere",
             "Segment": "Corporate & IoT Parking",
             "Control Center / Leitstand": "ParkHere Corporate Admin: Buchungskalender für Mitarbeiter, Zuteilungs-Logik, Schrankenfreigabe per Kennzeichen/App.",
@@ -597,6 +606,12 @@ with tab3:
         * **Modell:** Flaggschiff-System *entervo* und Integrationsplattform *mobility CONNECT*.
         * **Stärken:** Tiefe Verzahnung mit Tankstellen, ÖPNV-Verbünden und Bahn-Infrastrukturen.
         * 💡 **PM-Schlussfolgerung:** Konzentriert sich auf ganzheitliche Mobilitätsketten (MaaS) und vernetzte Flottenabrechnung.
+        """,
+        "parkoneer (S&B)": """
+        * **Modell:** Corporate Smart-Parking-Marke von Scheidt & Bachmann für Mitarbeiter- und Mixed-Use-Flächen.
+        * **Fokus:** Dynamische Flächenauslastung via Kennzeichenerkennung (ANPR) und Self-Service-Portal für Mitarbeiter.
+        * **Signage-Fokus:** Vermarktet mit *parkoneer Sign* aktiv eigene Display-Stelen für die Einfahrt.
+        * 💡 **PM-Schlussfolgerung:** Scheidt & Bachmanns direkte Antwort auf ParkHere und ParkEfficient. Verhindert, dass Enterprise-Kunden mit Firmenarealen zu agilen Startups abwandern.
         """,
         "HUB Parking (FAAC)": """
         * **Modell:** Modulare Systemhaus-Lösungen rund um die *Jupiter*-Serie und das *JMS (Janus Management System)*.
