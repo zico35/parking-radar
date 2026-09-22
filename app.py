@@ -5,6 +5,7 @@ import email.utils
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
+import time
 
 # --- Seitenkonfiguration ---
 st.set_page_config(
@@ -57,15 +58,15 @@ COMPETITORS = {
     "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership)'
 }
 
-# --- Robuster Feed-Download via requests ---
+# --- Sanfter, Google-freundlicher Feed-Download ---
 def _fetch_rss(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8"
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
     try:
-        resp = requests.get(url, headers=headers, timeout=8)
-        if resp.status_code == 200:
+        resp = requests.get(url, headers=headers, timeout=6)
+        if resp.status_code == 200 and resp.content:
             return feedparser.parse(resp.content)
     except Exception:
         pass
@@ -73,120 +74,126 @@ def _fetch_rss(url):
 
 def _scrape_single_competitor(comp, query):
     items = []
+    # Kurzer Schutz-Jitter gegen Rate Limiting
+    time.sleep(0.15)
+
     clean_query = query.replace(" when:90d", "")
     encoded = urllib.parse.quote(clean_query)
 
-    locales = [
-        "hl=de&gl=DE&ceid=DE:de",
-        "hl=en-US&gl=US&ceid=US:en"
-    ]
+    # US-spezifische Anbieter fragen US-Feed an, der Rest standardmäßig DE
+    if any(us_marker in comp for us_marker in ["Flash", "Metropolis", "Amano"]):
+        locale_param = "hl=en-US&gl=US&ceid=US:en"
+    else:
+        locale_param = "hl=de&gl=DE&ceid=DE:de"
 
-    for locale in locales:
-        rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
-        feed = _fetch_rss(rss_url)
-        if not feed or not feed.entries:
+    rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale_param}"
+    feed = _fetch_rss(rss_url)
+
+    if not feed or not hasattr(feed, "entries") or not feed.entries:
+        return items
+
+    for entry in feed.entries[:4]:
+        link = getattr(entry, "link", "")
+        title = getattr(entry, "title", "")
+        title_lower = title.lower()
+
+        # Spam-, Profil- und Stellenanzeigen-Filter
+        if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
+            continue
+        if "linkedin.com/in/" in link:
             continue
 
-        for entry in feed.entries[:4]:
-            link = getattr(entry, "link", "")
-            title = getattr(entry, "title", "")
-            title_lower = title.lower()
+        # Datum parsen
+        pub_date_str = getattr(entry, "published", "")
+        dt_obj = datetime.min
+        if pub_date_str:
+            try:
+                dt_obj = email.utils.parsedate_to_datetime(pub_date_str)
+            except Exception:
+                dt_obj = datetime.min
 
-            # Filter gegen Stellenanzeigen, Lebensläufe und Spam
-            if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
-                continue
-            if "linkedin.com/in/" in link:
-                continue
+        # --- Strategische Tag-Erkennung ---
+        tags = []
+        if "linkedin.com" in link or "linkedin" in title_lower:
+            tags.append("LinkedIn")
 
-            # Datum parsen für exakte Sortierung
-            pub_date_str = entry.get("published", "")
-            dt_obj = datetime.min
-            if pub_date_str:
-                try:
-                    dt_obj = email.utils.parsedate_to_datetime(pub_date_str)
-                except Exception:
-                    dt_obj = datetime.min
+        if any(k in title_lower for k in [
+            "control center", "leitstand", "leitwarte", "remote", "intercom", 
+            "voip", "monitoring", "dispatch", "operator", "jms", "command"
+        ]):
+            tags.append("Control Center / Leitstand")
 
-            # --- Strategische Tag-Erkennung ---
-            tags = []
-            if "linkedin.com" in link or "linkedin" in title_lower:
-                tags.append("LinkedIn")
+        if any(k in title_lower for k in [
+            "api", "webhook", "sdk", "marketplace", "marktplatz", 
+            "schnittstelle", "integrat", "open platform", "ecosystem"
+        ]):
+            tags.append("APIs / Marktplatz")
 
-            if any(k in title_lower for k in [
-                "control center", "leitstand", "leitwarte", "remote", "intercom", 
-                "voip", "monitoring", "dispatch", "operator", "jms", "command"
-            ]):
-                tags.append("Control Center / Leitstand")
+        if any(k in title_lower for k in [
+            "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
+            "surge pricing", "variable rates", "pricing"
+        ]):
+            tags.append("Dynamic Pricing")
 
-            if any(k in title_lower for k in [
-                "api", "webhook", "sdk", "marketplace", "marktplatz", 
-                "schnittstelle", "integrat", "open platform", "ecosystem"
-            ]):
-                tags.append("APIs / Marktplatz")
+        if any(k in title_lower for k in [
+            "signage", "display", "anzeige", "led", "vms", 
+            "wayfinding", "screen", "stelen", "information display"
+        ]):
+            tags.append("Signage / Displays")
 
-            if any(k in title_lower for k in [
-                "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
-                "surge pricing", "variable rates", "pricing"
-            ]):
-                tags.append("Dynamic Pricing")
+        if any(k in title_lower for k in [
+            "ticketless", "free-flow", "free flow", "frictionless", 
+            "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
+        ]):
+            tags.append("Free-Flow / Ticketless")
 
-            if any(k in title_lower for k in [
-                "signage", "display", "anzeige", "led", "vms", 
-                "wayfinding", "screen", "stelen", "information display"
-            ]):
-                tags.append("Signage / Displays")
+        if any(k in title_lower for k in [
+            "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"
+        ]):
+            tags.append("Shared Parking")
 
-            if any(k in title_lower for k in [
-                "ticketless", "free-flow", "free flow", "frictionless", 
-                "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
-            ]):
-                tags.append("Free-Flow / Ticketless")
+        if any(k in title_lower for k in [
+            "enforcement", "falschparker", "violation", "compliance", "validation"
+        ]):
+            tags.append("Enforcement / Überwachung")
 
-            if any(k in title_lower for k in [
-                "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"
-            ]):
-                tags.append("Shared Parking")
+        if any(k in title_lower for k in [
+            "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
+        ]):
+            tags.append("Kooperation")
 
-            if any(k in title_lower for k in [
-                "enforcement", "falschparker", "violation", "compliance", "validation"
-            ]):
-                tags.append("Enforcement / Überwachung")
+        if any(k in title_lower for k in [
+            "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
+        ]):
+            tags.append("Hardware / POS")
 
-            if any(k in title_lower for k in [
-                "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
-            ]):
-                tags.append("Kooperation")
+        if any(k in title_lower for k in [
+            "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
+        ]):
+            tags.append("EV / Energie")
 
-            if any(k in title_lower for k in [
-                "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
-            ]):
-                tags.append("Hardware / POS")
+        if not tags:
+            tags.append("Projekt / News")
 
-            if any(k in title_lower for k in [
-                "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
-            ]):
-                tags.append("EV / Energie")
+        items.append({
+            "competitor": comp,
+            "title": title,
+            "link": link,
+            "published": pub_date_str,
+            "dt": dt_obj,
+            "tags": tags
+        })
 
-            if not tags:
-                tags.append("Projekt / News")
-
-            items.append({
-                "competitor": comp,
-                "title": title,
-                "link": link,
-                "published": pub_date_str,
-                "dt": dt_obj,
-                "tags": tags
-            })
     return items
 
-# --- Parallele Abfrage mit st.cache_data ---
-@st.cache_data(ttl=1800)
+# --- 1 Stunde Cache (schont Anfragen maximal) ---
+@st.cache_data(ttl=3600)
 def fetch_live_news():
     all_results = []
     seen_links = set()
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    # Sanfte Parallelisierung: Maximal 3 gleichzeitige Anfragen
+    with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {
             executor.submit(_scrape_single_competitor, comp, query): comp
             for comp, query in COMPETITORS.items()
@@ -252,7 +259,7 @@ with tab1:
 
     search_query = st.text_input("🔍 Suchbegriff im Titel eingeben (optional):", "").lower().strip()
 
-    with st.spinner("Lade Marktdaten..."):
+    with st.spinner("Lade Marktdaten (sanftes Laden zur Vermeidung von Sperren)..."):
         all_news = fetch_live_news()
 
     filtered_news = []
@@ -272,7 +279,7 @@ with tab1:
     st.divider()
 
     if not filtered_news:
-        st.info("Keine Meldungen gefunden, die diesen Filterkriterien entsprechen.")
+        st.info("Aktuell liegen keine neuen Meldungen vor oder Google pausiert kurz den Abruf. Bitte in 10-15 Minuten erneut 'Aktualisieren' klicken.")
     else:
         for item in filtered_news:
             with st.container():
