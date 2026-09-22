@@ -12,32 +12,32 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
-# --- Datenquellen: Zweisprachige Suchbegriffe (DE + EN) ---
+# --- Datenquellen: Vollständiges PM-Fachvokabular (DE + EN) ---
 COMPETITORS = {
     # 1. Klassische globale Systemhäuser
-    "SKIDATA": '"SKIDATA" (Parken OR Parking OR "SKIDATA Connect" OR Airport OR Barrier) when:90d',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parken OR Parking OR entervo OR "mobility CONNECT") when:90d',
-    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking" OR "Janus Management") when:90d',
-    "Amano McGann": '("Amano McGann" OR "Amano Parking" OR "Amano ONE") when:90d',
-    "Flowbird": '"Flowbird" (Parking OR Parken OR Mobility OR "Open Payment") when:90d',
+    "SKIDATA": '"SKIDATA" (Parking OR ticketless OR "free-flow" OR Connect OR barrier OR airport) when:90d',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parking OR entervo OR "mobility CONNECT" OR ticketless OR gateless) when:90d',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") (JMS OR ticketless OR "free flow" OR barrier) when:90d',
+    "Amano McGann": '("Amano McGann" OR "Amano Parking") ("Amano ONE" OR ticketless OR gateless) when:90d',
+    "Flowbird": '"Flowbird" (Parking OR "pay-by-plate" OR ticketless OR "open payment" OR enforcement) when:90d',
 
     # 2. Kamera- & Cloud-Disruptoren
-    "Peter Park": '"Peter Park" (Parken OR Parking OR ANPR OR "barrier-free" OR CityFlow) when:90d',
-    "Parkdepot": '"Parkdepot" (Parkplatz OR Parking OR Kamera OR Camera) when:90d',
-    "ARIVO": '"ARIVO" (Parken OR Parking OR ANPR OR "barrier-free") when:90d',
-    "Smart City System": '("Smart City System" OR "ParkAgent") when:90d',
-    "Autopay (Nordics)": '"Autopay" (Parking OR ANPR OR "barrier-free") when:90d',
+    "Peter Park": '"Peter Park" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR CityFlow OR enforcement) when:90d',
+    "Parkdepot": '"Parkdepot" (Parkplatz OR Parking OR enforcement OR "free-flow" OR camera OR Kamera) when:90d',
+    "ARIVO": '"ARIVO" (Parken OR Parking OR ticketless OR "free-flow" OR ANPR OR Schrankenlos) when:90d',
+    "Smart City System": '("Smart City System" OR "ParkAgent") (Parken OR occupancy OR sensor OR ANPR) when:90d',
+    "Autopay (Nordics)": '"Autopay" (Parking OR ticketless OR "free-flow" OR ANPR OR frictionless) when:90d',
 
     # 3. US / Globale Plattformen
-    "Flash (USA)": '("FlashParking" OR "Flash Parking" OR "Flash EV") when:90d',
-    "Metropolis (USA)": '"Metropolis" (Parking OR "SP+" OR "Computer Vision") when:90d',
+    "Flash (USA)": '("FlashParking" OR "Flash Parking") (cloud OR EV OR "dynamic pricing" OR ticketless) when:90d',
+    "Metropolis (USA)": '"Metropolis" (Parking OR "drive-through" OR "checkout-free" OR "computer vision") when:90d',
 
     # 4. Mobility & Payment Aggregatoren
-    "EasyPark": '"EasyPark" (Parking OR Parken OR "CameraPark" OR Acquisition) when:90d',
-    "Parkster": '"Parkster" (Parking OR Parken OR Partnership) when:90d'
+    "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition OR partnership) when:90d',
+    "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership) when:90d'
 }
 
-# --- Cache-gestützte Datenabfrage: Global (DE + EN) ---
+# --- Cache-gestützte Datenabfrage mit erweitertem PM-Tagging ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
@@ -46,7 +46,6 @@ def fetch_live_news():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
-    # Beide Sprachräume abfragen: Deutsch (DE) und International/Englisch (US)
     feed_locales = [
         "hl=de&gl=DE&ceid=DE:de",
         "hl=en-US&gl=US&ceid=US:en"
@@ -59,7 +58,7 @@ def fetch_live_news():
             rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
             feed = feedparser.parse(rss_url, request_headers=headers)
 
-            for entry in feed.entries[:4]:
+            for entry in feed.entries[:5]:
                 link = entry.link
                 if link in seen_links:
                     continue
@@ -67,29 +66,43 @@ def fetch_live_news():
                 title = entry.title
                 title_lower = title.lower()
 
-                # Personenprofile und Personalien herausfiltern
-                if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary"]):
+                # Spam-, Profil- und Stellenanzeigen-Filter
+                if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
                     continue
                 if "linkedin.com/in/" in link:
                     continue
 
                 seen_links.add(link)
 
-                # Schlagwort-Erkennung (Deutsch & Englisch)
+                # Detailliertes PM-Tagging
                 tags = []
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
 
-                if any(k in title_lower for k in ["kooperation", "partner", "allianz", "acquisition", "deal", "contract"]):
-                    tags.append("Kooperation")
-                if any(k in title_lower for k in ["kamera", "anpr", "lpr", "schrankenlos", "free-flow", "barrierless", "license plate"]):
-                    tags.append("Camera / ANPR")
-                if any(k in title_lower for k in ["cloud", "software", "app", "plattform", "platform", "api", "saas"]):
+                # Schrankenlos / Free-Flow / Ticketless
+                if any(k in title_lower for k in ["ticketless", "free-flow", "free flow", "frictionless", "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"]):
+                    tags.append("Free-Flow / Ticketless")
+
+                # Cloud, Plattformen & dynamic pricing
+                if any(k in title_lower for k in ["cloud", "software", "app", "platform", "plattform", "api", "dynamic pricing"]):
                     tags.append("Cloud / Software")
-                if any(k in title_lower for k in ["ladesäule", "ev", "charging", "strom", "energy"]):
+
+                # Enforcement & Validierung
+                if any(k in title_lower for k in ["enforcement", "falschparker", "violation", "compliance", "validation"]):
+                    tags.append("Enforcement / Überwachung")
+
+                # Kooperationen & M&A
+                if any(k in title_lower for k in ["kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"]):
+                    tags.append("Kooperation")
+
+                # Hardware & Terminals
+                if any(k in title_lower for k in ["kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"]):
+                    tags.append("Hardware / POS")
+
+                # EV & Ladeinfrastruktur
+                if any(k in title_lower for k in ["ev", "charging", "ladesäule", "strom", "energy"]):
                     tags.append("EV / Energie")
-                if any(k in title_lower for k in ["kasse", "schranke", "barrier", "gate", "kiosk", "terminal", "hardware"]):
-                    tags.append("Hardware")
+
                 if not tags:
                     tags.append("Projekt / News")
 
