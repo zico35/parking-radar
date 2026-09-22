@@ -109,6 +109,15 @@ def fetch_live_news():
                 if any(k in title_lower for k in ["ev", "charging", "ladesäule", "strom", "energy"]):
                     tags.append("EV / Energie")
 
+                if any(k in title_lower for k in ["signage", "display", "anzeige", "led", "vms", "wayfinding", "information display"]):
+                    tags.append("Signage / Displays")
+
+                if any(k in title_lower for k in ["dynamic pricing", "tarifierung", "yield", "flexible tarife", "surge pricing"]):
+                    tags.append("Dynamic Pricing")
+
+                if any(k in title_lower for k in ["shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"]):
+                    tags.append("Shared Parking")
+
                 if not tags:
                     tags.append("Projekt / News")
 
