@@ -141,10 +141,13 @@ tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "
 with tab1:
     st.subheader("Aktuelle Marktbewegungen & LinkedIn-Funde")
 
-    # Alle vorhandenen Tags dynamisch sammeln für das Dropdown
+    # Alle vorhandenen Tags für das Dropdown
     all_tags = [
         "Alle",
         "Free-Flow / Ticketless",
+        "Signage / Displays",        # <-- NEU
+        "Dynamic Pricing",           # <-- NEU
+        "Shared Parking",            # <-- NEU
         "Cloud / Software",
         "Kooperation",
         "Hardware / POS",
