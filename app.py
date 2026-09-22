@@ -12,32 +12,32 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
-# --- Datenquellen: Vollständiges Wettbewerber-Set inkl. LinkedIn-Suche ---
+# --- Datenquellen: Nur relevante Business-News & max. 90 Tage alt ---
 COMPETITORS = {
-    # 1. Klassische Systemhäuser (News + LinkedIn Posts)
-    "SKIDATA": '"SKIDATA" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkhaus OR Connect)',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann" (site:linkedin.com/posts OR site:linkedin.com/company OR entervo OR mobility)',
-    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC") (site:linkedin.com/posts OR site:linkedin.com/company OR JMS)',
-    "Amano McGann": '"Amano McGann" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
-    "Flowbird": '"Flowbird" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+    # 1. Klassische Systemhäuser
+    "SKIDATA": '"SKIDATA" (Parken OR Parkhaus OR Schranke OR Connect OR Software) when:90d',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parken OR entervo OR "mobility CONNECT" OR Parksysteme) when:90d',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") when:90d',
+    "Amano McGann": '("Amano McGann" OR "Amano Parking") when:90d',
+    "Flowbird": '"Flowbird" (Parking OR Parken OR Mobility) when:90d',
 
     # 2. Kamera & Cloud Disruptoren
-    "Peter Park": '"Peter Park" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken OR CityFlow)',
-    "Parkdepot": '"Parkdepot" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkplatz)',
-    "ARIVO": '"ARIVO" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)',
-    "Smart City System": '("Smart City System" OR "ParkAgent") (site:linkedin.com/posts OR site:linkedin.com/company)',
-    "Autopay (Nordics)": '"Autopay" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+    "Peter Park": '"Peter Park" (Parken OR Parkplatz OR ANPR OR Schrankenlos) when:90d',
+    "Parkdepot": '"Parkdepot" (Parkplatz OR Parken OR Kamera) when:90d',
+    "ARIVO": '"ARIVO" (Parken OR Schrankenlos OR Kennzeichen) when:90d',
+    "Smart City System": '("Smart City System" OR "ParkAgent") when:90d',
+    "Autopay (Nordics)": '"Autopay" (Parking OR Parken) when:90d',
 
-    # 3. US Plattformen & Computer Vision
-    "Flash (USA)": '("FlashParking" OR "Flash") (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
-    "Metropolis (USA)": '"Metropolis" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+    # 3. US / Plattformen
+    "Flash (USA)": '("FlashParking" OR "Flash Parking") when:90d',
+    "Metropolis (USA)": '"Metropolis" (Parking OR "SP+") when:90d',
 
     # 4. Mobility & Payment
-    "EasyPark": '"EasyPark" (site:linkedin.com/posts OR site:linkedin.com/company OR CameraPark)',
-    "Parkster": '"Parkster" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)'
+    "EasyPark": '"EasyPark" (Parken OR CameraPark OR Akquisition OR Kooperation) when:90d',
+    "Parkster": '"Parkster" (Parken OR Kooperation OR Bezahlung) when:90d'
 }
 
-# --- Cache-gestützte Datenabfrage mit Browser-Header ---
+# --- Cache-gestützte Datenabfrage mit Filter gegen veraltete Profile ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
@@ -54,6 +54,12 @@ def fetch_live_news():
             title = entry.title
             title_lower = title.lower()
 
+            # Müll herausfiltern: Mitarbeiter-Profile, Lebensläufe und Karriere-Links ignorieren
+            if any(junk in title_lower for k, junk in enumerate(["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige"])):
+                continue
+            if "linkedin.com/in/" in entry.link:
+                continue
+
             tags = []
             if "linkedin.com" in entry.link or "linkedin" in title_lower:
                 tags.append("LinkedIn")
@@ -69,7 +75,7 @@ def fetch_live_news():
             if any(k in title_lower for k in ["kasse", "automat", "schranke", "terminal", "hardware"]):
                 tags.append("Hardware")
             if not tags:
-                tags.append("Markt / Allgemein")
+                tags.append("Projekt / News")
 
             news_items.append({
                 "competitor": comp,
@@ -80,7 +86,6 @@ def fetch_live_news():
             })
 
     return news_items
-
 # --- Navigation Tabs ---
 tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "📁 PM-Dossiers & Strategie"])
 
