@@ -40,7 +40,7 @@ COMPETITORS = {
 import email.utils
 from datetime import datetime
 
-# --- Cache-gestützte Datenabfrage mit echtem Datums-Parsing ---
+# --- Cache-gestützte Datenabfrage mit strategischem PM-Tagging ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
@@ -77,7 +77,7 @@ def fetch_live_news():
 
                 seen_links.add(link)
 
-                # Datum parsen für exakte Sortierung
+                # Datum parsen
                 pub_date_str = entry.get("published", "")
                 dt_obj = datetime.min
                 if pub_date_str:
@@ -86,37 +86,75 @@ def fetch_live_news():
                     except Exception:
                         dt_obj = datetime.min
 
-                # Detailliertes PM-Tagging
+                # --- Strategische Tag-Erkennung ---
                 tags = []
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
 
-                if any(k in title_lower for k in ["ticketless", "free-flow", "free flow", "frictionless", "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"]):
-                    tags.append("Free-Flow / Ticketless")
+                # 1. Control Center & Leitstand
+                if any(k in title_lower for k in [
+                    "control center", "leitstand", "leitwarte", "remote", "intercom", 
+                    "voip", "monitoring", "dispatch", "operator", "jms", "command"
+                ]):
+                    tags.append("Control Center / Leitstand")
 
-                if any(k in title_lower for k in ["cloud", "software", "app", "platform", "plattform", "api", "dynamic pricing"]):
-                    tags.append("Cloud / Software")
+                # 2. APIs & Marktplatz / Digitale Schnittstellen
+                if any(k in title_lower for k in [
+                    "api", "webhook", "sdk", "marketplace", "marktplatz", 
+                    "schnittstelle", "integrat", "open platform", "ecosystem"
+                ]):
+                    tags.append("APIs / Marktplatz")
 
-                if any(k in title_lower for k in ["enforcement", "falschparker", "violation", "compliance", "validation"]):
-                    tags.append("Enforcement / Überwachung")
-
-                if any(k in title_lower for k in ["kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"]):
-                    tags.append("Kooperation")
-
-                if any(k in title_lower for k in ["kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"]):
-                    tags.append("Hardware / POS")
-
-                if any(k in title_lower for k in ["ev", "charging", "ladesäule", "strom", "energy"]):
-                    tags.append("EV / Energie")
-
-                if any(k in title_lower for k in ["signage", "display", "anzeige", "led", "vms", "wayfinding", "information display"]):
-                    tags.append("Signage / Displays")
-
-                if any(k in title_lower for k in ["dynamic pricing", "tarifierung", "yield", "flexible tarife", "surge pricing"]):
+                # 3. Dynamic Pricing
+                if any(k in title_lower for k in [
+                    "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
+                    "surge pricing", "variable rates", "pricing"
+                ]):
                     tags.append("Dynamic Pricing")
 
-                if any(k in title_lower for k in ["shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"]):
+                # 4. Signage & Displays
+                if any(k in title_lower for k in [
+                    "signage", "display", "anzeige", "led", "vms", 
+                    "wayfinding", "screen", "stelen", "information display"
+                ]):
+                    tags.append("Signage / Displays")
+
+                # 5. Free-Flow / Ticketless
+                if any(k in title_lower for k in [
+                    "ticketless", "free-flow", "free flow", "frictionless", 
+                    "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
+                ]):
+                    tags.append("Free-Flow / Ticketless")
+
+                # 6. Shared Parking & Quartiere
+                if any(k in title_lower for k in [
+                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"
+                ]):
                     tags.append("Shared Parking")
+
+                # 7. Enforcement & Überwachung
+                if any(k in title_lower for k in [
+                    "enforcement", "falschparker", "violation", "compliance", "validation"
+                ]):
+                    tags.append("Enforcement / Überwachung")
+
+                # 8. Kooperationen & M&A
+                if any(k in title_lower for k in [
+                    "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
+                ]):
+                    tags.append("Kooperation")
+
+                # 9. Hardware & POS
+                if any(k in title_lower for k in [
+                    "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
+                ]):
+                    tags.append("Hardware / POS")
+
+                # 10. EV & Ladeinfrastruktur
+                if any(k in title_lower for k in [
+                    "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
+                ]):
+                    tags.append("EV / Energie")
 
                 if not tags:
                     tags.append("Projekt / News")
@@ -131,32 +169,29 @@ def fetch_live_news():
                 })
 
     return news_items
-    
-# --- Navigation Tabs ---
-tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "📁 PM-Dossiers & Strategie"])
+
 
 # ==========================================
-# TAB 1: LIVE-RADAR (MIT FILTERN & SORTIERUNG)
+# TAB 1: LIVE-RADAR (ERWEITERTER FILTER)
 # ==========================================
 with tab1:
-    st.subheader("Aktuelle Marktbewegungen & LinkedIn-Funde")
+    st.subheader("Aktuelle Marktbewegungen & Fach-Trends")
 
-    # Alle vorhandenen Tags für das Dropdown
     all_tags = [
         "Alle",
+        "Control Center / Leitstand",  # NEU
+        "APIs / Marktplatz",           # NEU
+        "Dynamic Pricing",
+        "Signage / Displays",
         "Free-Flow / Ticketless",
-        "Signage / Displays",        # <-- NEU
-        "Dynamic Pricing",           # <-- NEU
-        "Shared Parking",            # <-- NEU
-        "Cloud / Software",
+        "Shared Parking",
+        "Enforcement / Überwachung",
         "Kooperation",
         "Hardware / POS",
-        "Enforcement / Überwachung",
         "EV / Energie",
         "LinkedIn"
     ]
 
-    # Filter-Leiste
     col_btn, col_comp, col_tag, col_sort = st.columns([1, 2, 2, 2])
     with col_btn:
         st.write("")
@@ -174,13 +209,12 @@ with tab1:
     with col_sort:
         sort_order = st.selectbox("Sortierung", ["Neueste zuerst", "Älteste zuerst"])
 
-    # Freitext-Suche
     search_query = st.text_input("🔍 Suchbegriff im Titel eingeben (optional):", "").lower().strip()
 
     with st.spinner("Lade Marktdaten..."):
         all_news = fetch_live_news()
 
-    # 1. Filter anwenden
+    # Filter anwenden
     filtered_news = []
     for item in all_news:
         if comp_filter != "Alle" and item["competitor"] != comp_filter:
@@ -191,14 +225,13 @@ with tab1:
             continue
         filtered_news.append(item)
 
-    # 2. Sortierung nach echtem Datum
+    # Sortierung
     reverse_sort = True if sort_order == "Neueste zuerst" else False
     filtered_news = sorted(filtered_news, key=lambda x: x["dt"], reverse=reverse_sort)
 
     st.markdown(f"**Gefundene Treffer:** `{len(filtered_news)}`")
     st.divider()
 
-    # Ausgabe der Meldungen
     if not filtered_news:
         st.info("Keine Meldungen gefunden, die diesen Filterkriterien entsprechen.")
     else:
@@ -209,103 +242,195 @@ with tab1:
                 st.caption(f"Tags: {tag_str} | Veröffentlicht: **{item['published']}**")
                 st.markdown(f"👉 [Originalmeldung öffnen]({item['link']})")
                 st.divider()
+    
+# --- Navigation Tabs ---
+tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "📁 PM-Dossiers & Strategie"])
+
 # ==========================================
-# TAB 2: FEATURE-MATRIX
+# TAB 1: LIVE-RADAR (ERWEITERTER FILTER)
+# ==========================================
+with tab1:
+    st.subheader("Aktuelle Marktbewegungen & Fach-Trends")
+
+    all_tags = [
+        "Alle",
+        "Control Center / Leitstand",  # NEU
+        "APIs / Marktplatz",           # NEU
+        "Dynamic Pricing",
+        "Signage / Displays",
+        "Free-Flow / Ticketless",
+        "Shared Parking",
+        "Enforcement / Überwachung",
+        "Kooperation",
+        "Hardware / POS",
+        "EV / Energie",
+        "LinkedIn"
+    ]
+
+    col_btn, col_comp, col_tag, col_sort = st.columns([1, 2, 2, 2])
+    with col_btn:
+        st.write("")
+        st.write("")
+        if st.button("🔄 Aktualisieren"):
+            st.cache_data.clear()
+            st.rerun()
+
+    with col_comp:
+        comp_filter = st.selectbox("Wettbewerber", ["Alle"] + list(COMPETITORS.keys()))
+
+    with col_tag:
+        tag_filter = st.selectbox("Thema / Tag", all_tags)
+
+    with col_sort:
+        sort_order = st.selectbox("Sortierung", ["Neueste zuerst", "Älteste zuerst"])
+
+    search_query = st.text_input("🔍 Suchbegriff im Titel eingeben (optional):", "").lower().strip()
+
+    with st.spinner("Lade Marktdaten..."):
+        all_news = fetch_live_news()
+
+    # Filter anwenden
+    filtered_news = []
+    for item in all_news:
+        if comp_filter != "Alle" and item["competitor"] != comp_filter:
+            continue
+        if tag_filter != "Alle" and tag_filter not in item["tags"]:
+            continue
+        if search_query and search_query not in item["title"].lower():
+            continue
+        filtered_news.append(item)
+
+    # Sortierung
+    reverse_sort = True if sort_order == "Neueste zuerst" else False
+    filtered_news = sorted(filtered_news, key=lambda x: x["dt"], reverse=reverse_sort)
+
+    st.markdown(f"**Gefundene Treffer:** `{len(filtered_news)}`")
+    st.divider()
+
+    if not filtered_news:
+        st.info("Keine Meldungen gefunden, die diesen Filterkriterien entsprechen.")
+    else:
+        for item in filtered_news:
+            with st.container():
+                st.markdown(f"#### [{item['competitor']}] {item['title']}")
+                tag_str = " ".join([f"`{t}`" for t in item['tags']])
+                st.caption(f"Tags: {tag_str} | Veröffentlicht: **{item['published']}**")
+                st.markdown(f"👉 [Originalmeldung öffnen]({item['link']})")
+                st.divider()
+
+
+# ==========================================
+# TAB 2: STRATEGISCHE ARCHITEKTUR- & FEATURE-MATRIX
 # ==========================================
 with tab2:
-    st.subheader("Markt-Segmentierung: Systemhäuser vs. Cloud- & Mobility-Player")
+    st.subheader("Strategischer Architektur- & Feature-Vergleich")
+    st.caption("Detaillierte Analyse zu Leitstand (Control Center), offenen APIs, Dynamic Pricing & digitaler Kundenansprache (Signage).")
 
-    matrix_data = [
+    detailed_matrix = [
         {
             "Wettbewerber": "SKIDATA",
-            "Segment": "Klassisches Systemhaus (Global)",
-            "Schrankenlos (ANPR)": "Hybrid via SKIDATA Connect",
-            "Architektur": "Hybrid / Enterprise Cloud",
-            "Hardware-Fokus": "High-End Schranken, Kassen, Säulen",
-            "Kern-Zielgruppe": "Flughäfen, Shopping-Center, Großbetreiber"
+            "Segment": "Enterprise Systemhaus",
+            "Control Center / Leitstand": "Zentrales Monitoring & Control: Multi-Site-Leitstand für Großbetreiber, Intercom/VoIP-Routing, Video-Streaming, Remote-Kennzeichenprüfung bei ANPR-Fehlern, Remote-Schrankenöffnung.",
+            "APIs & Ökosystem": "SKIDATA Connect Plattform: Offene REST-APIs für Mobility-Partner, Parkplatz-Marktplätze, EV-Roaming und Vorbuchungsplattformen.",
+            "Dynamic Pricing": "Regelbasierte Tarif-Engine (zeit-, event- und auslastungsabhängig); Synchronisation mit Kassen und Buchungsportalen.",
+            "Signage & Displays": "Proprietäre und Standard-VMS-Ansteuerung (Zulauf, Restplätze, Echtzeit-Kennzeigenspiegelung an Ein-/Ausfahrt)."
         },
         {
             "Wettbewerber": "Scheidt & Bachmann",
-            "Segment": "Klassisches Systemhaus (Global)",
-            "Schrankenlos (ANPR)": "Hybrid via mobility CONNECT",
-            "Architektur": "Hybrid / entervo Cloud Services",
-            "Hardware-Fokus": "Kassenautomaten, Gates, Bezahlsäulen",
-            "Kern-Zielgruppe": "Städte, Großgaragen, Bahnen, Mobility-Hubs"
+            "Segment": "Enterprise Systemhaus",
+            "Control Center / Leitstand": "entervo Leitstand + 'smart control' App: Vollständige Überwachung aller Feldgeräte, mobile Entstörung vor Ort, Intercom-Weiterleitung auf Mobilgeräte.",
+            "APIs & Ökosystem": "mobility CONNECT: Offener API-Hub für MaaS-Anbieter, Buchungsplattformen, Payment-Provider, Flottenkarten & Ladedienste.",
+            "Dynamic Pricing": "entervo Tarifserver mit flexiblen Staffelmodellen, Kalender-/Event-Steuerung.",
+            "Signage & Displays": "Anbindung von Wechselverkehrszeichen (VMS), städtischen Parkleitrechnern (Datex II) & Multimedia-Bildschirmen an Terminals."
         },
         {
             "Wettbewerber": "HUB Parking (FAAC)",
-            "Segment": "Klassisches Systemhaus (Global)",
-            "Schrankenlos (ANPR)": "Hybrid via JMS (Janus Management)",
-            "Architektur": "JMS Cloud / On-Premise",
-            "Hardware-Fokus": "Jupiter-Serie, Barcode/Ticket-Kassen",
-            "Kern-Zielgruppe": "Kommunen, Krankenhäuser, Universitäten"
+            "Segment": "Enterprise Systemhaus",
+            "Control Center / Leitstand": "JMS (Janus Management System): Webbasierte Leitstandkonsole für Multi-Standorte, CCTV-Streaming, Alarm- und Aufgabenrouting.",
+            "APIs & Ökosystem": "JMS Open APIs: Schnittstellen für Vorbuchungssysteme, Payment-Gateways und Dritt-Geschäftslogik.",
+            "Dynamic Pricing": "Tarifkonfigurator für gestaffelte und eventspezifische Abrechnung.",
+            "Signage & Displays": "JDS (Janus Digital Signage): Integriertes CMS zur Steuerung dynamischer Werbe- und Infobildschirme an Automaten/Säulen."
         },
         {
-            "Wettbewerber": "Amano McGann",
-            "Segment": "Klassisches Systemhaus (US/Asien)",
-            "Schrankenlos (ANPR)": "Hybrid / Ticketless Optionen",
-            "Architektur": "Amano ONE (Cloud Platform)",
-            "Hardware-Fokus": "Robuste Terminals, Schranken, Kassen",
-            "Kern-Zielgruppe": "Nordamerika & Asien, Großgaragen"
+            "Wettbewerber": "Peter Park",
+            "Segment": "Cloud Disruptor (ANPR)",
+            "Control Center / Leitstand": "CityFlow Operations Web-App: Reines SaaS-Dashboard für Belegung & Falschparker; kein klassischer Intercom-/Hardware-Leitstand.",
+            "APIs & Ökosystem": "CityFlow API: Native Integration von EasyPark (CameraPark), Parkster, Twint, Whitelabel-Web-Payment.",
+            "Dynamic Pricing": "Zonenabhängige Preisanpassung über Cloud-Backend; Fokus auf Retail & Mischquartiere.",
+            "Signage & Displays": "Partner-Integration für Begrüßungsanzeigen an der Zufahrt (Kennzeichen-Spiegelung, Hinweise)."
+        },
+        {
+            "Wettbewerber": "Parkdepot",
+            "Segment": "Cloud Disruptor (ANPR)",
+            "Control Center / Leitstand": "Parkdepot Backoffice: Fokus auf Falschparker-Evidenz und Verwarnungsprozesse; kein Operator-Leitstand für Schranken/Sprechanlagen.",
+            "APIs & Ökosystem": "Schnittstellen zu Supermarkt-Filialsystemen und Inkasso; eher geschlossenes Ökosystem.",
+            "Dynamic Pricing": "Fokus auf Freiparkdauern und Überschreitungstarife (Vertragsstrafen), kein dynamisches Yield-Management.",
+            "Signage & Displays": "Eigene Kamerasäulen mit integrierter Kennzeichen-Visualisierung zur Transparenz für Autofahrer."
         },
         {
             "Wettbewerber": "Flowbird",
             "Segment": "On-Street & Off-Street Mix",
-            "Schrankenlos (ANPR)": "Ja / Kombiniert mit Parkscheinautomaten",
-            "Architektur": "Flowbird Hub / Open Payment",
-            "Hardware-Fokus": "Solar-Parkscheinautomaten, Terminals",
-            "Kern-Zielgruppe": "Kommunaler Straßenraum, P&R-Flächen"
-        },
-        {
-            "Wettbewerber": "Peter Park",
-            "Segment": "Camera-Only / SaaS Disruptor",
-            "Schrankenlos (ANPR)": "100% Core Focus (CityFlow)",
-            "Architektur": "Rein Cloud-native SaaS",
-            "Hardware-Fokus": "Keine Schranken/Kassen (Partner-Kameras)",
-            "Kern-Zielgruppe": "Einzelhandel, Kommunen, Parkplatzbetreiber"
-        },
-        {
-            "Wettbewerber": "Parkdepot",
-            "Segment": "Camera-Only / Full-Service",
-            "Schrankenlos (ANPR)": "100% Core Focus",
-            "Architektur": "Cloud-native + Eigene KI-Kameras",
-            "Hardware-Fokus": "Eigene Kamerasäulen (keine Kassen)",
-            "Kern-Zielgruppe": "Supermärkte, Kundenparkplätze, Retail"
-        },
-        {
-            "Wettbewerber": "Autopay",
-            "Segment": "Skandinavischer Free-Flow Pionier",
-            "Schrankenlos (ANPR)": "100% Core Focus",
-            "Architektur": "Cloud-basiertes ANPR-Netzwerk",
-            "Hardware-Fokus": "Reine ANPR-Portallösungen",
-            "Kern-Zielgruppe": "Nordeuropa, Shopping-Center, Flughäfen"
+            "Control Center / Leitstand": "Flowbird Hub: Flottenmanagement für Automaten, Live-Monitoring, Kassen-Füllstände; schlanker Leitstand.",
+            "APIs & Ökosystem": "Offene Schnittstellen für kommunale Mobilitätsplattformen, Open Payment & Handyparken.",
+            "Dynamic Pricing": "Starke kommunale Tarifregeln (Bewohner, Pendler, Zeitzonen), weniger Yield-Pricing.",
+            "Signage & Displays": "Fokus auf integrierte Display-Terminals und Parkleitsystem-Schnittstellen."
         },
         {
             "Wettbewerber": "Flash (USA)",
-            "Segment": "US Cloud-OS & EV",
-            "Schrankenlos (ANPR)": "Ja / Hybrid",
-            "Architektur": "Cloud-native Operating System",
-            "Hardware-Fokus": "Schlanke Kioske + EV-Ladeintegration",
-            "Kern-Zielgruppe": "US-Großbetreiber, Commercial Real Estate"
-        },
-        {
-            "Wettbewerber": "Metropolis (USA)",
-            "Segment": "Computer-Vision Plattform",
-            "Schrankenlos (ANPR)": "100% Drive-in / Drive-out",
-            "Architektur": "Proprietäre Computer Vision",
-            "Hardware-Fokus": "Eliminiert (reines Checkout-Free)",
-            "Kern-Zielgruppe": "Off-Street Parkhäuser (ex SP+ Netz)"
-        },
-        {
-            "Wettbewerber": "EasyPark / Parkster",
-            "Segment": "Mobility- & Payment-Aggregator",
-            "Schrankenlos (ANPR)": "Integration in Schrankenlos-Partner",
-            "Architektur": "Endkunden-App + Betreiber-Schnittstellen",
-            "Hardware-Fokus": "Reine Software / Apps",
-            "Kern-Zielgruppe": "Endverbraucher, Städte, Flotten"
+            "Segment": "US Cloud Platform",
+            "Control Center / Leitstand": "FlashOS Cloud Command: Voll virtueller 24/7-Leitstand mit 2-Wege-Video an Kiosken, Remote-Gatesteuerung.",
+            "APIs & Ökosystem": "Flash API Ecosystem: Tiefe Koppelung von Valet-Software, EV-Chargern, Aggregatoren und Flotten.",
+            "Dynamic Pricing": "Voll dynamisches Yield-Pricing nach Hotel-/Airline-Vorbild (nachfrageabhängige Preisanpassung).",
+            "Signage & Displays": "Dynamische Preisanzeige an Zufahrts-Stelen in Echtzeit synchronisiert mit der App."
         }
     ]
-    st.dataframe(matrix_data, use_container_width=True)
+
+    # Dynamische Umschaltung der Spalten je nach Fragestellung
+    view_mode = st.radio(
+        "Fokus-Ansicht wählen:",
+        ["Gesamtübersicht", "Control Center & Leitstand", "APIs & Ökosystem", "Dynamic Pricing & Signage"],
+        horizontal=True
+    )
+
+    if view_mode == "Gesamtübersicht":
+        st.dataframe(detailed_matrix, use_container_width=True)
+    elif view_mode == "Control Center & Leitstand":
+        cols = ["Wettbewerber", "Segment", "Control Center / Leitstand"]
+        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+    elif view_mode == "APIs & Ökosystem":
+        cols = ["Wettbewerber", "Segment", "APIs & Ökosystem"]
+        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+    elif view_mode == "Dynamic Pricing & Signage":
+        cols = ["Wettbewerber", "Segment", "Dynamic Pricing", "Signage & Displays"]
+        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("Architektur-Differenzierung für Produktmanager")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.expander("🏢 Leitstand-Vergleich: Systemhaus vs. Cloud-Disruptor"):
+            st.markdown("""
+            * **Klassische Systemhäuser (SKIDATA, Scheidt & Bachmann, HUB):**
+              * Bieten echte **24/7-Leitwarten-Architekturen** für Großbetreiber.
+              * SIP/VoIP-Intercom-Routing, Video-Zuschaltung, direkte Schrankenfernsteuerung, Kassenstörungs-Handling.
+              * Unverzichtbar für Betreiber mit Sicherheitsauflagen (z. B. Flughäfen, Spitäler, städtische Großgaragen).
+            * **Reine ANPR-Disruptoren (Peter Park, Parkdepot):**
+              * Besitzen **keinen physischen Hardware-Leitstand**, da Schranken und Intercoms entfallen.
+              * Das 'Control Center' beschränkt sich auf Belegungsanzeige, ANPR-Nachverifikation bei unleserlichen Schildern und Falschparker-Listen.
+              * *Verkaufsargument:* Großbetreiber können mit reinen Disruptoren oft bestehende Schranken- und Sprechanlagen-Workflows nicht 1:1 abbilden.
+            """)
+
+    with c2:
+        with st.expander("🔌 Schnittstellen & Signage: Das neue Schlachtfeld"):
+            st.markdown("""
+            * **Open APIs (Plattform statt Monolith):**
+              * Reine Kassen- und Schrankenverkäufe genügen Betreibern nicht mehr.
+              * Entscheidend ist die Geschwindigkeit, mit der externe Vertriebskanäle (Parketplace, Vorbucher, Flottenkarten) per Webhook angebunden werden können.
+            * **Signage als Enabler für Ticketless:**
+              * Ohne Schranke ist das Display das einzige Feedback für den Fahrer.
+              * Wer Signage (Begrüßung, Kennzeigenspiegelung, Bezahlstatus) in Echtzeit (< 500 ms) aus dem Leitstand bedient, gewinnt die User Experience bei Ticketless-Projekten.
+            """)
 
 # ==========================================
 # TAB 3: PM-DOSSIERS & STRATEGIE
