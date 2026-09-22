@@ -1,6 +1,8 @@
 import streamlit as st
 import feedparser
 import urllib.parse
+import email.utils
+from datetime import datetime
 
 # --- Seitenkonfiguration ---
 st.set_page_config(
@@ -10,7 +12,7 @@ st.set_page_config(
 )
 
 st.title("🚗 Global Parking Competitor Hub")
-st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
+st.caption("Echtzeit-Marktüberblick, Leitstand-Architektur & PM-Strategie für moderne Park- & Mobilitätssysteme")
 
 # --- Datenquellen: Vollständiges PM-Fachvokabular (DE + EN) ---
 COMPETITORS = {
@@ -36,9 +38,6 @@ COMPETITORS = {
     "EasyPark": '"EasyPark" (Parking OR "CameraPark" OR ticketless OR acquisition OR partnership) when:90d',
     "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership) when:90d'
 }
-
-import email.utils
-from datetime import datetime
 
 # --- Cache-gestützte Datenabfrage mit strategischem PM-Tagging ---
 @st.cache_data(ttl=1800)
@@ -77,7 +76,7 @@ def fetch_live_news():
 
                 seen_links.add(link)
 
-                # Datum parsen
+                # Datum parsen für Sortierung
                 pub_date_str = entry.get("published", "")
                 dt_obj = datetime.min
                 if pub_date_str:
@@ -86,71 +85,61 @@ def fetch_live_news():
                     except Exception:
                         dt_obj = datetime.min
 
-                # --- Strategische Tag-Erkennung ---
+                # Strategisches PM-Tagging
                 tags = []
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
 
-                # 1. Control Center & Leitstand
                 if any(k in title_lower for k in [
                     "control center", "leitstand", "leitwarte", "remote", "intercom", 
                     "voip", "monitoring", "dispatch", "operator", "jms", "command"
                 ]):
                     tags.append("Control Center / Leitstand")
 
-                # 2. APIs & Marktplatz / Digitale Schnittstellen
                 if any(k in title_lower for k in [
                     "api", "webhook", "sdk", "marketplace", "marktplatz", 
                     "schnittstelle", "integrat", "open platform", "ecosystem"
                 ]):
                     tags.append("APIs / Marktplatz")
 
-                # 3. Dynamic Pricing
                 if any(k in title_lower for k in [
                     "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
                     "surge pricing", "variable rates", "pricing"
                 ]):
                     tags.append("Dynamic Pricing")
 
-                # 4. Signage & Displays
                 if any(k in title_lower for k in [
                     "signage", "display", "anzeige", "led", "vms", 
                     "wayfinding", "screen", "stelen", "information display"
                 ]):
                     tags.append("Signage / Displays")
 
-                # 5. Free-Flow / Ticketless
                 if any(k in title_lower for k in [
                     "ticketless", "free-flow", "free flow", "frictionless", 
                     "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
                 ]):
                     tags.append("Free-Flow / Ticketless")
 
-                # 6. Shared Parking & Quartiere
                 if any(k in title_lower for k in [
                     "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"
                 ]):
                     tags.append("Shared Parking")
 
-                # 7. Enforcement & Überwachung
                 if any(k in title_lower for k in [
                     "enforcement", "falschparker", "violation", "compliance", "validation"
                 ]):
                     tags.append("Enforcement / Überwachung")
 
-                # 8. Kooperationen & M&A
                 if any(k in title_lower for k in [
                     "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
                 ]):
                     tags.append("Kooperation")
 
-                # 9. Hardware & POS
                 if any(k in title_lower for k in [
                     "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
                 ]):
                     tags.append("Hardware / POS")
 
-                # 10. EV & Ladeinfrastruktur
                 if any(k in title_lower for k in [
                     "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
                 ]):
@@ -171,16 +160,23 @@ def fetch_live_news():
     return news_items
 
 
+# --- Hier werden die Tabs explizit definiert ---
+tab1, tab2, tab3 = st.tabs([
+    "📡 Live-Radar", 
+    "📊 Architektur & Feature-Matrix", 
+    "📁 PM-Dossiers & Strategie"
+])
+
 # ==========================================
-# TAB 1: LIVE-RADAR (ERWEITERTER FILTER)
+# TAB 1: LIVE-RADAR
 # ==========================================
 with tab1:
     st.subheader("Aktuelle Marktbewegungen & Fach-Trends")
 
     all_tags = [
         "Alle",
-        "Control Center / Leitstand",  # NEU
-        "APIs / Marktplatz",           # NEU
+        "Control Center / Leitstand",
+        "APIs / Marktplatz",
         "Dynamic Pricing",
         "Signage / Displays",
         "Free-Flow / Ticketless",
@@ -214,7 +210,6 @@ with tab1:
     with st.spinner("Lade Marktdaten..."):
         all_news = fetch_live_news()
 
-    # Filter anwenden
     filtered_news = []
     for item in all_news:
         if comp_filter != "Alle" and item["competitor"] != comp_filter:
@@ -225,7 +220,6 @@ with tab1:
             continue
         filtered_news.append(item)
 
-    # Sortierung
     reverse_sort = True if sort_order == "Neueste zuerst" else False
     filtered_news = sorted(filtered_news, key=lambda x: x["dt"], reverse=reverse_sort)
 
@@ -242,82 +236,6 @@ with tab1:
                 st.caption(f"Tags: {tag_str} | Veröffentlicht: **{item['published']}**")
                 st.markdown(f"👉 [Originalmeldung öffnen]({item['link']})")
                 st.divider()
-    
-# --- Navigation Tabs ---
-tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "📁 PM-Dossiers & Strategie"])
-
-# ==========================================
-# TAB 1: LIVE-RADAR (ERWEITERTER FILTER)
-# ==========================================
-with tab1:
-    st.subheader("Aktuelle Marktbewegungen & Fach-Trends")
-
-    all_tags = [
-        "Alle",
-        "Control Center / Leitstand",  # NEU
-        "APIs / Marktplatz",           # NEU
-        "Dynamic Pricing",
-        "Signage / Displays",
-        "Free-Flow / Ticketless",
-        "Shared Parking",
-        "Enforcement / Überwachung",
-        "Kooperation",
-        "Hardware / POS",
-        "EV / Energie",
-        "LinkedIn"
-    ]
-
-    col_btn, col_comp, col_tag, col_sort = st.columns([1, 2, 2, 2])
-    with col_btn:
-        st.write("")
-        st.write("")
-        if st.button("🔄 Aktualisieren"):
-            st.cache_data.clear()
-            st.rerun()
-
-    with col_comp:
-        comp_filter = st.selectbox("Wettbewerber", ["Alle"] + list(COMPETITORS.keys()))
-
-    with col_tag:
-        tag_filter = st.selectbox("Thema / Tag", all_tags)
-
-    with col_sort:
-        sort_order = st.selectbox("Sortierung", ["Neueste zuerst", "Älteste zuerst"])
-
-    search_query = st.text_input("🔍 Suchbegriff im Titel eingeben (optional):", "").lower().strip()
-
-    with st.spinner("Lade Marktdaten..."):
-        all_news = fetch_live_news()
-
-    # Filter anwenden
-    filtered_news = []
-    for item in all_news:
-        if comp_filter != "Alle" and item["competitor"] != comp_filter:
-            continue
-        if tag_filter != "Alle" and tag_filter not in item["tags"]:
-            continue
-        if search_query and search_query not in item["title"].lower():
-            continue
-        filtered_news.append(item)
-
-    # Sortierung
-    reverse_sort = True if sort_order == "Neueste zuerst" else False
-    filtered_news = sorted(filtered_news, key=lambda x: x["dt"], reverse=reverse_sort)
-
-    st.markdown(f"**Gefundene Treffer:** `{len(filtered_news)}`")
-    st.divider()
-
-    if not filtered_news:
-        st.info("Keine Meldungen gefunden, die diesen Filterkriterien entsprechen.")
-    else:
-        for item in filtered_news:
-            with st.container():
-                st.markdown(f"#### [{item['competitor']}] {item['title']}")
-                tag_str = " ".join([f"`{t}`" for t in item['tags']])
-                st.caption(f"Tags: {tag_str} | Veröffentlicht: **{item['published']}**")
-                st.markdown(f"👉 [Originalmeldung öffnen]({item['link']})")
-                st.divider()
-
 
 # ==========================================
 # TAB 2: STRATEGISCHE ARCHITEKTUR- & FEATURE-MATRIX
@@ -385,7 +303,6 @@ with tab2:
         }
     ]
 
-    # Dynamische Umschaltung der Spalten je nach Fragestellung
     view_mode = st.radio(
         "Fokus-Ansicht wählen:",
         ["Gesamtübersicht", "Control Center & Leitstand", "APIs & Ökosystem", "Dynamic Pricing & Signage"],
