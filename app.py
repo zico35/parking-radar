@@ -12,80 +12,97 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
-# --- Datenquellen: Nur relevante Business-News & max. 90 Tage alt ---
+# --- Datenquellen: Zweisprachige Suchbegriffe (DE + EN) ---
 COMPETITORS = {
-    # 1. Klassische Systemhäuser
-    "SKIDATA": '"SKIDATA" (Parken OR Parkhaus OR Schranke OR Connect OR Software) when:90d',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parken OR entervo OR "mobility CONNECT" OR Parksysteme) when:90d',
-    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking") when:90d',
-    "Amano McGann": '("Amano McGann" OR "Amano Parking") when:90d',
-    "Flowbird": '"Flowbird" (Parking OR Parken OR Mobility) when:90d',
+    # 1. Klassische globale Systemhäuser
+    "SKIDATA": '"SKIDATA" (Parken OR Parking OR "SKIDATA Connect" OR Airport OR Barrier) when:90d',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (Parken OR Parking OR entervo OR "mobility CONNECT") when:90d',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC Parking" OR "Janus Management") when:90d',
+    "Amano McGann": '("Amano McGann" OR "Amano Parking" OR "Amano ONE") when:90d',
+    "Flowbird": '"Flowbird" (Parking OR Parken OR Mobility OR "Open Payment") when:90d',
 
-    # 2. Kamera & Cloud Disruptoren
-    "Peter Park": '"Peter Park" (Parken OR Parkplatz OR ANPR OR Schrankenlos) when:90d',
-    "Parkdepot": '"Parkdepot" (Parkplatz OR Parken OR Kamera) when:90d',
-    "ARIVO": '"ARIVO" (Parken OR Schrankenlos OR Kennzeichen) when:90d',
+    # 2. Kamera- & Cloud-Disruptoren
+    "Peter Park": '"Peter Park" (Parken OR Parking OR ANPR OR "barrier-free" OR CityFlow) when:90d',
+    "Parkdepot": '"Parkdepot" (Parkplatz OR Parking OR Kamera OR Camera) when:90d',
+    "ARIVO": '"ARIVO" (Parken OR Parking OR ANPR OR "barrier-free") when:90d',
     "Smart City System": '("Smart City System" OR "ParkAgent") when:90d',
-    "Autopay (Nordics)": '"Autopay" (Parking OR Parken) when:90d',
+    "Autopay (Nordics)": '"Autopay" (Parking OR ANPR OR "barrier-free") when:90d',
 
-    # 3. US / Plattformen
-    "Flash (USA)": '("FlashParking" OR "Flash Parking") when:90d',
-    "Metropolis (USA)": '"Metropolis" (Parking OR "SP+") when:90d',
+    # 3. US / Globale Plattformen
+    "Flash (USA)": '("FlashParking" OR "Flash Parking" OR "Flash EV") when:90d',
+    "Metropolis (USA)": '"Metropolis" (Parking OR "SP+" OR "Computer Vision") when:90d',
 
-    # 4. Mobility & Payment
-    "EasyPark": '"EasyPark" (Parken OR CameraPark OR Akquisition OR Kooperation) when:90d',
-    "Parkster": '"Parkster" (Parken OR Kooperation OR Bezahlung) when:90d'
+    # 4. Mobility & Payment Aggregatoren
+    "EasyPark": '"EasyPark" (Parking OR Parken OR "CameraPark" OR Acquisition) when:90d',
+    "Parkster": '"Parkster" (Parking OR Parken OR Partnership) when:90d'
 }
 
-# --- Cache-gestützte Datenabfrage mit Filter gegen veraltete Profile ---
+# --- Cache-gestützte Datenabfrage: Global (DE + EN) ---
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
+    seen_links = set()
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
+    # Beide Sprachräume abfragen: Deutsch (DE) und International/Englisch (US)
+    feed_locales = [
+        "hl=de&gl=DE&ceid=DE:de",
+        "hl=en-US&gl=US&ceid=US:en"
+    ]
+
     for comp, query in COMPETITORS.items():
         encoded = urllib.parse.quote(query)
-        rss_url = f"https://news.google.com/rss/search?q={encoded}&hl=de&gl=DE&ceid=DE:de"
-        feed = feedparser.parse(rss_url, request_headers=headers)
 
-        for entry in feed.entries[:5]:
-            title = entry.title
-            title_lower = title.lower()
+        for locale in feed_locales:
+            rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
+            feed = feedparser.parse(rss_url, request_headers=headers)
 
-            # Müll herausfiltern: Mitarbeiter-Profile, Lebensläufe und Karriere-Links ignorieren
-            if any(junk in title_lower for k, junk in enumerate(["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige"])):
-                continue
-            if "linkedin.com/in/" in entry.link:
-                continue
+            for entry in feed.entries[:4]:
+                link = entry.link
+                if link in seen_links:
+                    continue
 
-            tags = []
-            if "linkedin.com" in entry.link or "linkedin" in title_lower:
-                tags.append("LinkedIn")
+                title = entry.title
+                title_lower = title.lower()
 
-            if any(k in title_lower for k in ["kooperation", "partner", "allianz", "schließt sich", "vertrag"]):
-                tags.append("Kooperation")
-            if any(k in title_lower for k in ["kamera", "anpr", "schrankenlos", "free-flow", "kennzeichen"]):
-                tags.append("Camera / ANPR")
-            if any(k in title_lower for k in ["cloud", "software", "app", "plattform", "api", "jms", "connect"]):
-                tags.append("Cloud / Software")
-            if any(k in title_lower for k in ["ladesäule", "ev", "charging", "strom", "energie"]):
-                tags.append("EV / Energie")
-            if any(k in title_lower for k in ["kasse", "automat", "schranke", "terminal", "hardware"]):
-                tags.append("Hardware")
-            if not tags:
-                tags.append("Projekt / News")
+                # Personenprofile und Personalien herausfiltern
+                if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary"]):
+                    continue
+                if "linkedin.com/in/" in link:
+                    continue
 
-            news_items.append({
-                "competitor": comp,
-                "title": title,
-                "link": entry.link,
-                "published": entry.get("published", ""),
-                "tags": tags
-            })
+                seen_links.add(link)
+
+                # Schlagwort-Erkennung (Deutsch & Englisch)
+                tags = []
+                if "linkedin.com" in link or "linkedin" in title_lower:
+                    tags.append("LinkedIn")
+
+                if any(k in title_lower for k in ["kooperation", "partner", "allianz", "acquisition", "deal", "contract"]):
+                    tags.append("Kooperation")
+                if any(k in title_lower for k in ["kamera", "anpr", "lpr", "schrankenlos", "free-flow", "barrierless", "license plate"]):
+                    tags.append("Camera / ANPR")
+                if any(k in title_lower for k in ["cloud", "software", "app", "plattform", "platform", "api", "saas"]):
+                    tags.append("Cloud / Software")
+                if any(k in title_lower for k in ["ladesäule", "ev", "charging", "strom", "energy"]):
+                    tags.append("EV / Energie")
+                if any(k in title_lower for k in ["kasse", "schranke", "barrier", "gate", "kiosk", "terminal", "hardware"]):
+                    tags.append("Hardware")
+                if not tags:
+                    tags.append("Projekt / News")
+
+                news_items.append({
+                    "competitor": comp,
+                    "title": title,
+                    "link": link,
+                    "published": entry.get("published", ""),
+                    "tags": tags
+                })
 
     return news_items
+    
 # --- Navigation Tabs ---
 tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "📁 PM-Dossiers & Strategie"])
 
