@@ -3,6 +3,8 @@ import feedparser
 import urllib.parse
 import email.utils
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import socket
 
 # --- Seitenkonfiguration ---
 st.set_page_config(
@@ -55,44 +57,37 @@ COMPETITORS = {
     "Parkster": '"Parkster" (Parking OR Parken OR ticketless OR partnership) when:90d'
 }
 
-# --- Cache-gestützte Datenabfrage mit strategischem PM-Tagging ---
-@st.cache_data(ttl=1800)
-def fetch_live_news():
-    news_items = []
-    seen_links = set()
+# Timeout für Netzwerk-Requests auf 5 Sekunden deckeln (verhindert ewiges Hängen)
+socket.setdefaulttimeout(5.0)
+
+def _scrape_single_competitor(comp, query):
+    """Holt die Feeds für einen einzelnen Wettbewerber (wird parallel ausgeführt)."""
+    items = []
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
-
     feed_locales = [
         "hl=de&gl=DE&ceid=DE:de",
         "hl=en-US&gl=US&ceid=US:en"
     ]
+    encoded = urllib.parse.quote(query)
 
-    for comp, query in COMPETITORS.items():
-        encoded = urllib.parse.quote(query)
-
-        for locale in feed_locales:
-            rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
+    for locale in feed_locales:
+        rss_url = f"https://news.google.com/rss/search?q={encoded}&{locale}"
+        try:
             feed = feedparser.parse(rss_url, request_headers=headers)
-
-            for entry in feed.entries[:5]:
+            for entry in feed.entries[:4]:
                 link = entry.link
-                if link in seen_links:
-                    continue
-
                 title = entry.title
                 title_lower = title.lower()
 
-                # Filter gegen Personenprofile, Stellenanzeigen und Spam
+                # Filter gegen Spam & HR-Profile
                 if any(junk in title_lower for junk in ["lebenslauf", "head of", "cv", "recruiting", "stellenanzeige", "obituary", "karriere"]):
                     continue
                 if "linkedin.com/in/" in link:
                     continue
 
-                seen_links.add(link)
-
-                # Datum parsen für exakte Sortierung
+                # Datum parsen
                 pub_date_str = entry.get("published", "")
                 dt_obj = datetime.min
                 if pub_date_str:
@@ -101,70 +96,34 @@ def fetch_live_news():
                     except Exception:
                         dt_obj = datetime.min
 
-                # --- Strategische Tag-Erkennung ---
+                # Tag-Erkennung
                 tags = []
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
-
-                if any(k in title_lower for k in [
-                    "control center", "leitstand", "leitwarte", "remote", "intercom", 
-                    "voip", "monitoring", "dispatch", "operator", "jms", "command"
-                ]):
+                if any(k in title_lower for k in ["control center", "leitstand", "leitwarte", "remote", "intercom", "voip", "monitoring", "dispatch", "operator", "jms", "command"]):
                     tags.append("Control Center / Leitstand")
-
-                if any(k in title_lower for k in [
-                    "api", "webhook", "sdk", "marketplace", "marktplatz", 
-                    "schnittstelle", "integrat", "open platform", "ecosystem"
-                ]):
+                if any(k in title_lower for k in ["api", "webhook", "sdk", "marketplace", "marktplatz", "schnittstelle", "integrat", "open platform", "ecosystem"]):
                     tags.append("APIs / Marktplatz")
-
-                if any(k in title_lower for k in [
-                    "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
-                    "surge pricing", "variable rates", "pricing"
-                ]):
+                if any(k in title_lower for k in ["dynamic pricing", "tarifierung", "yield", "flexible tarife", "surge pricing", "variable rates", "pricing"]):
                     tags.append("Dynamic Pricing")
-
-                if any(k in title_lower for k in [
-                    "signage", "display", "anzeige", "led", "vms", 
-                    "wayfinding", "screen", "stelen", "information display"
-                ]):
+                if any(k in title_lower for k in ["signage", "display", "anzeige", "led", "vms", "wayfinding", "screen", "stelen", "information display"]):
                     tags.append("Signage / Displays")
-
-                if any(k in title_lower for k in [
-                    "ticketless", "free-flow", "free flow", "frictionless", 
-                    "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
-                ]):
+                if any(k in title_lower for k in ["ticketless", "free-flow", "free flow", "frictionless", "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"]):
                     tags.append("Free-Flow / Ticketless")
-
-                if any(k in title_lower for k in [
-                    "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"
-                ]):
+                if any(k in title_lower for k in ["shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner", "corporate", "mitarbeiter"]):
                     tags.append("Shared Parking")
-
-                if any(k in title_lower for k in [
-                    "enforcement", "falschparker", "violation", "compliance", "validation"
-                ]):
+                if any(k in title_lower for k in ["enforcement", "falschparker", "violation", "compliance", "validation"]):
                     tags.append("Enforcement / Überwachung")
-
-                if any(k in title_lower for k in [
-                    "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
-                ]):
+                if any(k in title_lower for k in ["kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"]):
                     tags.append("Kooperation")
-
-                if any(k in title_lower for k in [
-                    "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
-                ]):
+                if any(k in title_lower for k in ["kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"]):
                     tags.append("Hardware / POS")
-
-                if any(k in title_lower for k in [
-                    "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
-                ]):
+                if any(k in title_lower for k in ["ev", "charging", "ladesäule", "strom", "energy", "ocpi"]):
                     tags.append("EV / Energie")
-
                 if not tags:
                     tags.append("Projekt / News")
 
-                news_items.append({
+                items.append({
                     "competitor": comp,
                     "title": title,
                     "link": link,
@@ -172,8 +131,34 @@ def fetch_live_news():
                     "dt": dt_obj,
                     "tags": tags
                 })
+        except Exception:
+            # Falls Google mal einen Feed blockiert oder verzögert, läuft der Rest einfach weiter
+            continue
+    return items
 
-    return news_items
+# --- Cache-gestützte parallele Datenabfrage ---
+@st.cache_data(ttl=1800)
+def fetch_live_news():
+    all_results = []
+    seen_links = set()
+
+    # 10 Anfragen gleichzeitig abfeuern (Multithreading)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [
+            executor.submit(_scrape_single_competitor, comp, query)
+            for comp, query in COMPETITORS.items()
+        ]
+        for future in as_completed(futures):
+            try:
+                res = future.result()
+                for item in res:
+                    if item["link"] not in seen_links:
+                        seen_links.add(item["link"])
+                        all_results.append(item)
+            except Exception:
+                continue
+
+    return all_results
 
 
 # --- Tabs definieren ---
