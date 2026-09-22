@@ -12,26 +12,27 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
+# --- Datenquellen: Vollständiges Wettbewerber-Set inkl. LinkedIn-Suche ---
 COMPETITORS = {
-    # Klassische Systemhäuser (News + LinkedIn Posts)
+    # 1. Klassische Systemhäuser (News + LinkedIn Posts)
     "SKIDATA": '"SKIDATA" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkhaus OR Connect)',
     "Scheidt & Bachmann": '"Scheidt & Bachmann" (site:linkedin.com/posts OR site:linkedin.com/company OR entervo OR mobility)',
     "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC") (site:linkedin.com/posts OR site:linkedin.com/company OR JMS)',
     "Amano McGann": '"Amano McGann" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
     "Flowbird": '"Flowbird" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
 
-    # Kamera & Cloud Disruptoren (hier posten Peter Park & Co. fast wöchentlich Meilensteine)
+    # 2. Kamera & Cloud Disruptoren
     "Peter Park": '"Peter Park" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken OR CityFlow)',
     "Parkdepot": '"Parkdepot" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkplatz)',
     "ARIVO": '"ARIVO" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)',
     "Smart City System": '("Smart City System" OR "ParkAgent") (site:linkedin.com/posts OR site:linkedin.com/company)',
     "Autopay (Nordics)": '"Autopay" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
 
-    # US / Plattformen
+    # 3. US Plattformen & Computer Vision
     "Flash (USA)": '("FlashParking" OR "Flash") (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
     "Metropolis (USA)": '"Metropolis" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
 
-    # Mobility & Payment
+    # 4. Mobility & Payment
     "EasyPark": '"EasyPark" (site:linkedin.com/posts OR site:linkedin.com/company OR CameraPark)',
     "Parkster": '"Parkster" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)'
 }
@@ -40,22 +41,19 @@ COMPETITORS = {
 @st.cache_data(ttl=1800)
 def fetch_live_news():
     news_items = []
-    # Standard-Browser-Header, damit Google News nicht blockiert
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
-    
+
     for comp, query in COMPETITORS.items():
         encoded = urllib.parse.quote(query)
-        # Suche auf Deutsch und international abgestimmt
         rss_url = f"https://news.google.com/rss/search?q={encoded}&hl=de&gl=DE&ceid=DE:de"
-        
         feed = feedparser.parse(rss_url, request_headers=headers)
-        
-for entry in feed.entries[:5]:  # Bis zu 5 Treffer pro Mitbewerber
+
+        for entry in feed.entries[:5]:
             title = entry.title
             title_lower = title.lower()
-            
+
             tags = []
             if "linkedin.com" in entry.link or "linkedin" in title_lower:
                 tags.append("LinkedIn")
@@ -80,7 +78,7 @@ for entry in feed.entries[:5]:  # Bis zu 5 Treffer pro Mitbewerber
                 "published": entry.get("published", ""),
                 "tags": tags
             })
-            
+
     return news_items
 
 # --- Navigation Tabs ---
@@ -90,8 +88,8 @@ tab1, tab2, tab3 = st.tabs(["📡 Live-Radar", "📊 Feature-Matrix (Global)", "
 # TAB 1: LIVE-RADAR
 # ==========================================
 with tab1:
-    st.subheader("Aktuelle Marktbewegungen & Pressemeldungen")
-    
+    st.subheader("Aktuelle Marktbewegungen & LinkedIn-Funde")
+
     col_btn, col_f1 = st.columns([1, 4])
     with col_btn:
         if st.button("🔄 Feeds jetzt neu laden"):
@@ -121,7 +119,7 @@ with tab1:
 # ==========================================
 with tab2:
     st.subheader("Markt-Segmentierung: Systemhäuser vs. Cloud- & Mobility-Player")
-    
+
     matrix_data = [
         {
             "Wettbewerber": "SKIDATA",
@@ -223,7 +221,7 @@ with tab3:
         "Unternehmen für Deep-Dive wählen:",
         list(COMPETITORS.keys())
     )
-    
+
     dossiers = {
         "Peter Park": """
         * **Modell:** Schrankenlose Bewirtschaftung via Kennzeichenerkennung (ANPR) mit Cloud-Backend (*CityFlow*).
@@ -289,5 +287,5 @@ with tab3:
         * 💡 **PM-Schlussfolgerung:** Zeigt, dass auch kleinere Anbieter mit hoher Schnittstellen-Flexibilität und fairen Preisen punkten können.
         """
     }
-    
+
     st.markdown(dossiers.get(selected_comp, "Kein Dossier hinterlegt."))
