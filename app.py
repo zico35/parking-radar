@@ -12,29 +12,28 @@ st.set_page_config(
 st.title("🚗 Global Parking Competitor Hub")
 st.caption("Echtzeit-Marktüberblick, Technologie-Trends & PM-Dossiers für die Parkraum- und Mobilitätsbranche")
 
-# --- Datenquellen: Schlankere, treffsichere Suchbegriffe ---
 COMPETITORS = {
-    # 1. Klassische Systemhäuser
-    "SKIDATA": '"SKIDATA"',
-    "Scheidt & Bachmann": '"Scheidt & Bachmann"',
-    "HUB Parking (FAAC)": '"HUB Parking" OR "FAAC"',
-    "Amano McGann": '"Amano McGann"',
-    "Flowbird": '"Flowbird"',
-    
-    # 2. Kamera & Cloud Disruptoren
-    "Peter Park": '"Peter Park" Parken',
-    "Parkdepot": '"Parkdepot"',
-    "ARIVO": '"ARIVO" Parken',
-    "Smart City System": '"Smart City System" OR "ParkAgent"',
-    "Autopay (Nordics)": '"Autopay" Parking',
+    # Klassische Systemhäuser (News + LinkedIn Posts)
+    "SKIDATA": '"SKIDATA" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkhaus OR Connect)',
+    "Scheidt & Bachmann": '"Scheidt & Bachmann" (site:linkedin.com/posts OR site:linkedin.com/company OR entervo OR mobility)',
+    "HUB Parking (FAAC)": '("HUB Parking" OR "FAAC") (site:linkedin.com/posts OR site:linkedin.com/company OR JMS)',
+    "Amano McGann": '"Amano McGann" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+    "Flowbird": '"Flowbird" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
 
-    # 3. US / Plattform-Giganten
-    "Flash (USA)": '"FlashParking" OR "Flash Parking"',
-    "Metropolis (USA)": '"Metropolis" Parking',
+    # Kamera & Cloud Disruptoren (hier posten Peter Park & Co. fast wöchentlich Meilensteine)
+    "Peter Park": '"Peter Park" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken OR CityFlow)',
+    "Parkdepot": '"Parkdepot" (site:linkedin.com/posts OR site:linkedin.com/company OR Parkplatz)',
+    "ARIVO": '"ARIVO" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)',
+    "Smart City System": '("Smart City System" OR "ParkAgent") (site:linkedin.com/posts OR site:linkedin.com/company)',
+    "Autopay (Nordics)": '"Autopay" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
 
-    # 4. Mobility & Apps
-    "EasyPark": '"EasyPark"',
-    "Parkster": '"Parkster"'
+    # US / Plattformen
+    "Flash (USA)": '("FlashParking" OR "Flash") (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+    "Metropolis (USA)": '"Metropolis" (site:linkedin.com/posts OR site:linkedin.com/company OR Parking)',
+
+    # Mobility & Payment
+    "EasyPark": '"EasyPark" (site:linkedin.com/posts OR site:linkedin.com/company OR CameraPark)',
+    "Parkster": '"Parkster" (site:linkedin.com/posts OR site:linkedin.com/company OR Parken)'
 }
 
 # --- Cache-gestützte Datenabfrage mit Browser-Header ---
