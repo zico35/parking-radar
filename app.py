@@ -76,7 +76,7 @@ def fetch_live_news():
 
                 seen_links.add(link)
 
-                # Datum parsen für Sortierung
+                # Datum parsen für exakte Sortierung
                 pub_date_str = entry.get("published", "")
                 dt_obj = datetime.min
                 if pub_date_str:
@@ -85,61 +85,71 @@ def fetch_live_news():
                     except Exception:
                         dt_obj = datetime.min
 
-                # Strategisches PM-Tagging
+                # --- Strategische Tag-Erkennung ---
                 tags = []
                 if "linkedin.com" in link or "linkedin" in title_lower:
                     tags.append("LinkedIn")
 
+                # Control Center / Leitstand
                 if any(k in title_lower for k in [
                     "control center", "leitstand", "leitwarte", "remote", "intercom", 
                     "voip", "monitoring", "dispatch", "operator", "jms", "command"
                 ]):
                     tags.append("Control Center / Leitstand")
 
+                # APIs & Marktplatz / Schnittstellen
                 if any(k in title_lower for k in [
                     "api", "webhook", "sdk", "marketplace", "marktplatz", 
                     "schnittstelle", "integrat", "open platform", "ecosystem"
                 ]):
                     tags.append("APIs / Marktplatz")
 
+                # Dynamic Pricing
                 if any(k in title_lower for k in [
                     "dynamic pricing", "tarifierung", "yield", "flexible tarife", 
                     "surge pricing", "variable rates", "pricing"
                 ]):
                     tags.append("Dynamic Pricing")
 
+                # Signage & Displays
                 if any(k in title_lower for k in [
                     "signage", "display", "anzeige", "led", "vms", 
                     "wayfinding", "screen", "stelen", "information display"
                 ]):
                     tags.append("Signage / Displays")
 
+                # Free-Flow / Ticketless
                 if any(k in title_lower for k in [
                     "ticketless", "free-flow", "free flow", "frictionless", 
                     "gateless", "schrankenlos", "anpr", "lpr", "kennzeichen"
                 ]):
                     tags.append("Free-Flow / Ticketless")
 
+                # Shared Parking
                 if any(k in title_lower for k in [
                     "shared parking", "quartier", "mixed-use", "mehrfachnutzung", "anwohner"
                 ]):
                     tags.append("Shared Parking")
 
+                # Enforcement & Validierung
                 if any(k in title_lower for k in [
                     "enforcement", "falschparker", "violation", "compliance", "validation"
                 ]):
                     tags.append("Enforcement / Überwachung")
 
+                # Kooperationen & Verträge
                 if any(k in title_lower for k in [
                     "kooperation", "partner", "partnership", "allianz", "acquisition", "deal", "contract"
                 ]):
                     tags.append("Kooperation")
 
+                # Hardware & Kassen
                 if any(k in title_lower for k in [
                     "kasse", "automat", "schranke", "barrier", "gate", "kiosk", "terminal", "pay-by-plate", "hardware"
                 ]):
                     tags.append("Hardware / POS")
 
+                # EV & Ladeinfrastruktur
                 if any(k in title_lower for k in [
                     "ev", "charging", "ladesäule", "strom", "energy", "ocpi"
                 ]):
@@ -160,7 +170,7 @@ def fetch_live_news():
     return news_items
 
 
-# --- Hier werden die Tabs explizit definiert ---
+# --- Tabs definieren ---
 tab1, tab2, tab3 = st.tabs([
     "📡 Live-Radar", 
     "📊 Architektur & Feature-Matrix", 
@@ -366,24 +376,13 @@ with tab2:
         }
     ]
 
-    # Dynamische Umschaltung der Ansicht
+    # Fokus-Filter
     view_mode = st.radio(
         "Fokus-Ansicht wählen:",
         ["Gesamtübersicht", "Control Center & Leitstand", "APIs & Ökosystem", "Dynamic Pricing & Signage"],
         horizontal=True
     )
 
-    # Spaltenkonfiguration für automatischen Zeilenumbruch (Word Wrap)
-    col_config = {
-        "Wettbewerber": st.column_config.TextColumn("Wettbewerber", width="medium"),
-        "Segment": st.column_config.TextColumn("Segment", width="small"),
-        "Control Center / Leitstand": st.column_config.TextColumn("Control Center / Leitstand", width="large"),
-        "APIs & Ökosystem": st.column_config.TextColumn("APIs & Ökosystem", width="large"),
-        "Dynamic Pricing": st.column_config.TextColumn("Dynamic Pricing", width="medium"),
-        "Signage & Displays": st.column_config.TextColumn("Signage & Displays", width="medium"),
-    }
-
-    # Daten je nach Auswahl filtern und mit Umbrüchen rendern
     if view_mode == "Gesamtübersicht":
         display_data = detailed_matrix
     elif view_mode == "Control Center & Leitstand":
@@ -396,12 +395,33 @@ with tab2:
         cols = ["Wettbewerber", "Segment", "Dynamic Pricing", "Signage & Displays"]
         display_data = [{k: row[k] for k in cols} for row in detailed_matrix]
 
-    st.dataframe(
-        display_data,
-        column_config=col_config,
-        use_container_width=True,
-        hide_index=True
-    )
+    # Umschalter: Lesemodus (Karten) vs. Tabelle
+    lesemodus = st.toggle("📖 Lesemodus aktivieren (Strukturierte Karten statt Tabelle)", value=True)
+
+    if lesemodus:
+        for item in display_data:
+            with st.container():
+                st.markdown(f"### {item['Wettbewerber']} <span style='font-size: 0.85em; color: gray;'>({item.get('Segment', '')})</span>", unsafe_allow_html=True)
+                cols_to_show = [k for k in item.keys() if k not in ["Wettbewerber", "Segment"]]
+                for key in cols_to_show:
+                    st.markdown(f"**{key}:**")
+                    st.info(item[key])
+                st.divider()
+    else:
+        col_config = {
+            "Wettbewerber": st.column_config.TextColumn("Wettbewerber", width="medium"),
+            "Segment": st.column_config.TextColumn("Segment", width="small"),
+            "Control Center / Leitstand": st.column_config.TextColumn("Control Center / Leitstand", width="large"),
+            "APIs & Ökosystem": st.column_config.TextColumn("APIs & Ökosystem", width="large"),
+            "Dynamic Pricing": st.column_config.TextColumn("Dynamic Pricing", width="medium"),
+            "Signage & Displays": st.column_config.TextColumn("Signage & Displays", width="medium"),
+        }
+        st.dataframe(
+            display_data,
+            column_config=col_config,
+            use_container_width=True,
+            hide_index=True
+        )
 
     st.markdown("---")
     st.subheader("Architektur-Differenzierung für Produktmanager")
@@ -417,7 +437,7 @@ with tab2:
             * **Reine ANPR-Disruptoren (Peter Park, Parkdepot):**
               * Besitzen **keinen physischen Hardware-Leitstand**, da Schranken und Intercoms entfallen.
               * Das 'Control Center' beschränkt sich auf Belegungsanzeige, ANPR-Nachverifikation bei unleserlichen Schildern und Falschparker-Listen.
-              * *Verkaufsargument:* Großbetreiber können mit reinen Disruptoren oft bestehende Schranken- und Sprechanlagen-Workflows nicht 1:1 abbilden.
+              * *Verkaufsargument:* Großbetreiber können mit reinen Disruptoren bestehende Schranken- und Sprechanlagen-Workflows nicht abbilden.
             """)
 
     with c2:
@@ -444,14 +464,14 @@ with tab3:
     dossiers = {
         "Peter Park": """
         * **Modell:** Schrankenlose Bewirtschaftung via Kennzeichenerkennung (ANPR) mit Cloud-Backend (*CityFlow*).
-        * **Treiber:** Wachstumskapital (Great Hill Partners), schnelle Expansion in DACH und UK.
+        * **Treiber:** Starkes Wachstumskapital, aggressive Expansion im DACH-Raum und UK.
         * **Ökosystem:** Tief verknüpft mit App-Bezahldiensten (EasyPark CameraPark, Parkster).
         * 💡 **PM-Schlussfolgerung:** Verdrängt Schranken und Kassen im Retail- und Kommunalbereich durch geringe Vorab-Investitionen (CapEx).
         """,
         "Parkdepot": """
         * **Modell:** Full-Service-Parkraumüberwachung für den Einzelhandel mit eigener modularer KI-Kamerahardware.
         * **Stärken:** Hohe Standardisierung bei Supermärkten (Rewe, Lidl, Aldi) und automatisierte Fallbearbeitung von Falschparkern.
-        * 💡 **PM-Schlussfolgerung:** Im reinen Discounter- und Filialumfeld kaum mit Kassenhardware zu schlagen. Klassische Systeme müssen sich auf Multi-Use-Flächen mit komplexeren Tarifen konzentrieren.
+        * 💡 **PM-Schlussfolgerung:** Im Discounter-Umfeld kaum mit Kassenhardware zu schlagen. Klassische Systeme müssen sich auf Multi-Use-Flächen mit komplexeren Tarifen konzentrieren.
         """,
         "SKIDATA": """
         * **Modell:** Ganzheitliche Zutritts- und Abrechnungssysteme unter ASSA ABLOY. Transformation via *SKIDATA Connect*.
