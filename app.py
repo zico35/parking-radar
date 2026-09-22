@@ -245,10 +245,11 @@ with tab2:
     st.caption("Detaillierte Analyse zu Leitstand (Control Center), offenen APIs, Dynamic Pricing & digitaler Kundenansprache (Signage).")
 
     detailed_matrix = [
+        # --- 1. Klassische Enterprise-Systemhäuser ---
         {
             "Wettbewerber": "SKIDATA",
             "Segment": "Enterprise Systemhaus",
-            "Control Center / Leitstand": "Zentrales Monitoring & Control: Multi-Site-Leitstand für Großbetreiber, Intercom/VoIP-Routing, Video-Streaming, Remote-Kennzeichenprüfung bei ANPR-Fehlern, Remote-Schrankenöffnung.",
+            "Control Center / Leitstand": "Zentrales Monitoring & Control: Multi-Site-Leitstand, SIP/VoIP-Routing, Video-Streaming, Remote-Kennzeichenprüfung bei ANPR-Fehlern, Schrankenfernöffnung.",
             "APIs & Ökosystem": "SKIDATA Connect Plattform: Offene REST-APIs für Mobility-Partner, Parkplatz-Marktplätze, EV-Roaming und Vorbuchungsplattformen.",
             "Dynamic Pricing": "Regelbasierte Tarif-Engine (zeit-, event- und auslastungsabhängig); Synchronisation mit Kassen und Buchungsportalen.",
             "Signage & Displays": "Proprietäre und Standard-VMS-Ansteuerung (Zulauf, Restplätze, Echtzeit-Kennzeigenspiegelung an Ein-/Ausfahrt)."
@@ -270,6 +271,24 @@ with tab2:
             "Signage & Displays": "JDS (Janus Digital Signage): Integriertes CMS zur Steuerung dynamischer Werbe- und Infobildschirme an Automaten/Säulen."
         },
         {
+            "Wettbewerber": "Amano McGann",
+            "Segment": "Enterprise Systemhaus (US/Asien)",
+            "Control Center / Leitstand": "Amano ONE Command Center: Cloud-basierte Fernüberwachung für Schranken & Kassen, integrierter Call-Center-Support.",
+            "APIs & Ökosystem": "Amano ONE API: Offene Cloud-Schnittstellen für Drittanbieter-Validierungen, Reservierungen und Zahlungsanbieter.",
+            "Dynamic Pricing": "Integrierte dynamische Ratenanpassung für Events und Spitzenzeiten in Parkhäusern.",
+            "Signage & Displays": "Direkte Ansteuerung von Ein-/Ausfahrts-Displays und Kassen-Touchscreens."
+        },
+        {
+            "Wettbewerber": "Flowbird",
+            "Segment": "On-Street & Off-Street Mix",
+            "Control Center / Leitstand": "Flowbird Hub: Flottenmanagement für Automaten, Live-Monitoring, Kassen-Füllstände; schlanker Leitstand für Kommunen.",
+            "APIs & Ökosystem": "Offene Schnittstellen für kommunale Mobilitätsplattformen, Open Payment & Handyparken.",
+            "Dynamic Pricing": "Starke kommunale Tarifregeln (Bewohner, Pendler, Zeitzonen), weniger flexibles Yield-Pricing.",
+            "Signage & Displays": "Fokus auf integrierte Display-Terminals und Parkleitsystem-Schnittstellen."
+        },
+
+        # --- 2. Kamera- & Cloud-Disruptoren ---
+        {
             "Wettbewerber": "Peter Park",
             "Segment": "Cloud Disruptor (ANPR)",
             "Control Center / Leitstand": "CityFlow Operations Web-App: Reines SaaS-Dashboard für Belegung & Falschparker; kein klassischer Intercom-/Hardware-Leitstand.",
@@ -286,13 +305,31 @@ with tab2:
             "Signage & Displays": "Eigene Kamerasäulen mit integrierter Kennzeichen-Visualisierung zur Transparenz für Autofahrer."
         },
         {
-            "Wettbewerber": "Flowbird",
-            "Segment": "On-Street & Off-Street Mix",
-            "Control Center / Leitstand": "Flowbird Hub: Flottenmanagement für Automaten, Live-Monitoring, Kassen-Füllstände; schlanker Leitstand.",
-            "APIs & Ökosystem": "Offene Schnittstellen für kommunale Mobilitätsplattformen, Open Payment & Handyparken.",
-            "Dynamic Pricing": "Starke kommunale Tarifregeln (Bewohner, Pendler, Zeitzonen), weniger Yield-Pricing.",
-            "Signage & Displays": "Fokus auf integrierte Display-Terminals und Parkleitsystem-Schnittstellen."
+            "Wettbewerber": "ARIVO",
+            "Segment": "Cloud Disruptor (Hybrid/ANPR)",
+            "Control Center / Leitstand": "ARIVO Cloud Control: Webbasierter Leitstand für hybride Anlagen (mit/ohne Schranke), Fernöffnung, Belegungsampeln.",
+            "APIs & Ökosystem": "ARIVO Open API: REST-Schnittstellen für Hotel-PMS, Zutrittskontrollsysteme und externe Bezahl-Apps.",
+            "Dynamic Pricing": "Flexible Tarifengine für Mischparker (Mitarbeiter frei, Externe gebührenpflichtig je Tageszeit).",
+            "Signage & Displays": "Unterstützung von LED-Restplatzanzeigen und Kennzeichenanzeigen an der Zufahrt."
         },
+        {
+            "Wettbewerber": "Smart City System",
+            "Segment": "Sensor- & ANPR-Disruptor",
+            "Control Center / Leitstand": "ParkAgent Platform: Visualisierung von Einzelflächen-Sensorik und ANPR-Kameras, Eskalations-Dashboard für Parkverstöße.",
+            "APIs & Ökosystem": "ParkAgent REST-API: Datenweitergabe an städtische Parkleitsysteme, Navigationsdienste und Betreiber.",
+            "Dynamic Pricing": "Eher statische Zeitzonenüberwachung (z. B. Kurzzeitparken 2h), keine Yield-Engine.",
+            "Signage & Displays": "Kopplung an digitale Hinweisschilder und dynamische Zonenwegweiser."
+        },
+        {
+            "Wettbewerber": "Autopay (Nordics)",
+            "Segment": "Skandinavischer Free-Flow Pionier",
+            "Control Center / Leitstand": "Autopay Operator Suite: Vollautomatisierter 24/7-Cloud-Betrieb, automatische ANPR-Abgleichung, minimale manuelle Eingriffe.",
+            "APIs & Ökosystem": "Umfassende API für nahtloses Auto-Debit (automatische Kreditkartenbelastung), Integration in EV-Ladenetzwerke.",
+            "Dynamic Pricing": "Vollständige Differenzierung nach Fahrzeugtyp, Uhrzeit, Mitgliedschaften und Auslastung.",
+            "Signage & Displays": "Zulauf-Displays mit Kennzeichen-Check und Hinweisen auf 48-Stunden-Zahlungsfristen im Web."
+        },
+
+        # --- 3. US Plattformen ---
         {
             "Wettbewerber": "Flash (USA)",
             "Segment": "US Cloud Platform",
@@ -300,26 +337,71 @@ with tab2:
             "APIs & Ökosystem": "Flash API Ecosystem: Tiefe Koppelung von Valet-Software, EV-Chargern, Aggregatoren und Flotten.",
             "Dynamic Pricing": "Voll dynamisches Yield-Pricing nach Hotel-/Airline-Vorbild (nachfrageabhängige Preisanpassung).",
             "Signage & Displays": "Dynamische Preisanzeige an Zufahrts-Stelen in Echtzeit synchronisiert mit der App."
+        },
+        {
+            "Wettbewerber": "Metropolis (USA)",
+            "Segment": "Computer-Vision Plattform",
+            "Control Center / Leitstand": "Metropolis Vision OS: Keine Hardware-Leitwarte; KI-Erfassung wickelt den Vorgang ohne Schranke oder Kasse ab.",
+            "APIs & Ökosystem": "Checkout-Free API: Nahtlose Wallet-Abrechnung ohne Kassen-Schnittstellen.",
+            "Dynamic Pricing": "Vollständig algorithmisch gesteuerte Preise je nach Standort und Fahrzeugfrequenz.",
+            "Signage & Displays": "Fokus auf Smartphone-Benachrichtigung statt physischer Vor-Ort-Displays."
+        },
+
+        # --- 4. Mobility & Payment Aggregatoren ---
+        {
+            "Wettbewerber": "EasyPark",
+            "Segment": "Mobility & Payment Aggregator",
+            "Control Center / Leitstand": "EasyPark Operator Portal: Kein Leitstand für Feldgeräte; Management von Transaktionen, Zonen und App-Nutzern.",
+            "APIs & Ökosystem": "CameraPark API & Standard-Konnektoren: Ermöglicht Kassen-/Schranken-Herstellern die Anbindung von App-Zahlung.",
+            "Dynamic Pricing": "Ermöglicht Kommunen und Betreibern das Ausspielen flexibler App-Tarife.",
+            "Signage & Displays": "Hinweisbeschilderung vor Ort ('Hier parken mit EasyPark') und In-App-Navigation."
+        },
+        {
+            "Wettbewerber": "Parkster",
+            "Segment": "Mobility & Payment Aggregator",
+            "Control Center / Leitstand": "Parkster Betreiberportal: Abrechnungs- und Transaktionsübersicht ohne Vor-Ort-Hardware-Steuerung.",
+            "APIs & Ökosystem": "Offene Schnittstellen für Schrankenlos-Partner (z. B. Peter Park) zur Zahlungsabwicklung.",
+            "Dynamic Pricing": "Unterstützung zonenspezifischer Betreibertarife ohne Zusatzgebühren für Endkunden.",
+            "Signage & Displays": "Klassische Zonenschilder vor Ort, Tarif- und Restzeitanzeige in der mobilen App."
         }
     ]
 
+    # Dynamische Umschaltung der Ansicht
     view_mode = st.radio(
         "Fokus-Ansicht wählen:",
         ["Gesamtübersicht", "Control Center & Leitstand", "APIs & Ökosystem", "Dynamic Pricing & Signage"],
         horizontal=True
     )
 
+    # Spaltenkonfiguration für automatischen Zeilenumbruch (Word Wrap)
+    col_config = {
+        "Wettbewerber": st.column_config.TextColumn("Wettbewerber", width="medium"),
+        "Segment": st.column_config.TextColumn("Segment", width="small"),
+        "Control Center / Leitstand": st.column_config.TextColumn("Control Center / Leitstand", width="large"),
+        "APIs & Ökosystem": st.column_config.TextColumn("APIs & Ökosystem", width="large"),
+        "Dynamic Pricing": st.column_config.TextColumn("Dynamic Pricing", width="medium"),
+        "Signage & Displays": st.column_config.TextColumn("Signage & Displays", width="medium"),
+    }
+
+    # Daten je nach Auswahl filtern und mit Umbrüchen rendern
     if view_mode == "Gesamtübersicht":
-        st.dataframe(detailed_matrix, use_container_width=True)
+        display_data = detailed_matrix
     elif view_mode == "Control Center & Leitstand":
         cols = ["Wettbewerber", "Segment", "Control Center / Leitstand"]
-        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+        display_data = [{k: row[k] for k in cols} for row in detailed_matrix]
     elif view_mode == "APIs & Ökosystem":
         cols = ["Wettbewerber", "Segment", "APIs & Ökosystem"]
-        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+        display_data = [{k: row[k] for k in cols} for row in detailed_matrix]
     elif view_mode == "Dynamic Pricing & Signage":
         cols = ["Wettbewerber", "Segment", "Dynamic Pricing", "Signage & Displays"]
-        st.dataframe([{k: row[k] for k in cols} for row in detailed_matrix], use_container_width=True)
+        display_data = [{k: row[k] for k in cols} for row in detailed_matrix]
+
+    st.dataframe(
+        display_data,
+        column_config=col_config,
+        use_container_width=True,
+        hide_index=True
+    )
 
     st.markdown("---")
     st.subheader("Architektur-Differenzierung für Produktmanager")
